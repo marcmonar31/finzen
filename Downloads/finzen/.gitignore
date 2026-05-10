@@ -1,0 +1,69 @@
+# Datos
+data/
+backend/data/
+data/*.db-journal
+data/*.db-wal
+data/*.db-shm
+data/backups/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+.venv
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Node
+node_modules/
+.next/
+.cache/
+.parcel-cache/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Frontend build
+frontend/dist/
+frontend/.vite/
+
+# Entorno
+.env
+.env.local
+.env.*.local
+*.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# OS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Coverage
+coverage/
+htmlcov/
+.coverage
+.coverage.*
+*.cover
+
+# Misc
+*.bak
+*.tmp
