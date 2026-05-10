@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
-import { ReglaOut, ReglaEjecucionOut } from "@/types/api";
+import type { ReglaOut, ReglaEjecucionOut } from "@/types/api";
 
 // ── Queries ──────────────────────────────────────────────────────────────────
 

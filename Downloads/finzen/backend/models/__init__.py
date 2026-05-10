@@ -14,6 +14,8 @@ from models.grupo import Grupo, GrupoMiembro, GastoCompartido, GastoReparto, Liq
 from models.regla import Regla, ReglaEjecucion
 from models.objetivo import Objetivo, ObjetivoAportacion
 from models.deuda import Deuda
+from models.inversion import Activo, Posicion, PrecioActual, ModoViaje
+from models.workspace_config import WorkspaceConfig
 
 __all__ = [
     "Usuario", "Workspace", "WorkspaceMiembro",
@@ -25,4 +27,6 @@ __all__ = [
     "Grupo", "GrupoMiembro", "GastoCompartido", "GastoReparto", "Liquidacion",
     "Regla", "ReglaEjecucion",
     "Objetivo", "ObjetivoAportacion", "Deuda",
+    "Activo", "Posicion", "PrecioActual", "ModoViaje",
+    "WorkspaceConfig",
 ]

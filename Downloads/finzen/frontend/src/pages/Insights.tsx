@@ -1,7 +1,7 @@
 import { TrendingUp, AlertTriangle, RefreshCw, Repeat, Coffee, Zap } from "lucide-react";
 import { clsx } from "clsx";
 import { useInsights } from "@/hooks/useInsights";
-import type { FactorSalud } from "@/types/api";
+import type { FactorSalud, InsightAnomalia } from "@/types/api";
 import { formatCurrency } from "@/lib/format";
 
 // ── SaludScore ────────────────────────────────────────────────────────────────
@@ -28,7 +28,6 @@ function SaludScore({ score, nivel, factores }: { score: number; nivel: string; 
 
   const radius = 54;
   const circunferencia = 2 * Math.PI * radius;
-  const dashoffset = circunferencia * (1 - score / 100);
 
   return (
     <div className={clsx("rounded-2xl p-4 shadow-sm", BG[nivel] ?? "bg-gray-50")}>
@@ -161,7 +160,7 @@ function HormigaCard({ items }: { items: Array<{ concepto: string; num_ocurrenci
 
 // ── AnomaliaCard ──────────────────────────────────────────────────────────────
 
-function AnomaliaCard({ anomalias }: { anomalias: Array<{ concepto: string; importe: string; moneda: string; factor: string; fecha: string }> }) {
+function AnomaliaCard({ anomalias }: { anomalias: InsightAnomalia[] }) {
   if (!anomalias.length) return null;
   return (
     <div className="bg-white rounded-2xl p-4 shadow-sm border border-red-100">

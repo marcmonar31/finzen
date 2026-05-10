@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 from apscheduler.schedulers.background import BackgroundScheduler
 
 from database import create_db_and_tables
-from routers import usuarios, workspaces, cuentas, categorias, etiquetas, movimientos, transferencias, presupuestos, recurrentes, amigos, grupos, reglas, objetivos, deudas, insights
+from routers import usuarios, workspaces, cuentas, categorias, etiquetas, movimientos, transferencias, presupuestos, recurrentes, amigos, grupos, reglas, objetivos, deudas, insights, inversiones, modos, cierre
 
 scheduler = BackgroundScheduler()
 
@@ -16,6 +16,8 @@ async def lifespan(app: FastAPI):
     from jobs.recurrentes_job import ejecutar_recurrentes
     scheduler.add_job(actualizar_tipos_cambio, "cron", hour=6, minute=0, id="tipos_cambio")
     scheduler.add_job(ejecutar_recurrentes, "interval", hours=1, id="recurrentes")
+    from jobs.precios_job import actualizar_precios
+    scheduler.add_job(actualizar_precios, "interval", weeks=1, id="precios_inversion")
     scheduler.start()
     yield
     scheduler.shutdown(wait=False)
@@ -50,6 +52,9 @@ app.include_router(reglas.router)
 app.include_router(objetivos.router)
 app.include_router(deudas.router)
 app.include_router(insights.router)
+app.include_router(inversiones.router)
+app.include_router(modos.router)
+app.include_router(cierre.router)
 
 
 @app.get("/health")

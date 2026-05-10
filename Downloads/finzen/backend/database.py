@@ -15,3 +15,8 @@ def create_db_and_tables() -> None:
 def get_session():
     with Session(engine) as session:
         yield session
+
+
+def get_session_sync() -> Session:
+    """Para uso en jobs (fuera de FastAPI)."""
+    return Session(engine)

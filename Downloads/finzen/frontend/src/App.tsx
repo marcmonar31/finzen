@@ -15,7 +15,8 @@ import { Reglas } from "@/pages/Reglas";
 import { Objetivos } from "@/pages/Objetivos";
 import { Deudas } from "@/pages/Deudas";
 import { Insights } from "@/pages/Insights";
-import { Placeholder } from "@/pages/Placeholder";
+import Inversiones from "@/pages/Inversiones";
+import Ajustes from "@/pages/Ajustes";
 import { Toaster } from "@/components/ui/sonner";
 
 const SECTION_PAGES: Record<string, React.ReactNode> = {
@@ -30,9 +31,9 @@ const SECTION_PAGES: Record<string, React.ReactNode> = {
   amigos: <Amigos />,
   grupos: <Grupos />,
   deudas: <Deudas />,
-  inversiones: <Placeholder emoji="📈" titulo="Inversiones" />,
+  inversiones: <Inversiones />,
   insights: <Insights />,
-  ajustes: <Placeholder emoji="⚙️" titulo="Ajustes" />,
+  ajustes: <Ajustes />,
 };
 
 export default function App() {

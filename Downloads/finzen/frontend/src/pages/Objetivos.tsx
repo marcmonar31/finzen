@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Target, Trash2, ChevronRight } from "lucide-react";
+import { Plus, Target, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { clsx } from "clsx";
 import { useObjetivos, useCrearObjetivo, useArchivarObjetivo, useAportar } from "@/hooks/useObjetivos";

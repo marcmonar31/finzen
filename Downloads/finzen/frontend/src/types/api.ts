@@ -365,3 +365,88 @@ export interface ReglaEjecucionOut {
   error: string | null;
   ejecutado_en: string;
 }
+
+// ─── Bloque 8: Inversiones, Modos, Cierre ────────────────────────────────────
+
+export interface ActivoOut {
+  id: string;
+  workspace_id: string;
+  ticker: string;
+  nombre: string;
+  tipo: string;
+  moneda: string;
+  creado_en: string;
+}
+
+export interface PosicionOut {
+  id: string;
+  workspace_id: string;
+  activo_id: string;
+  cantidad: string;
+  precio_medio: string;
+  moneda: string;
+  cuenta_id: string | null;
+  activa: boolean;
+  creado_en: string;
+}
+
+export interface ResumenCartera {
+  total_coste: string;
+  total_actual: string;
+  pl_total: string;
+  pl_pct_total: string;
+  posiciones: PosicionDetalle[];
+}
+
+export interface PosicionDetalle {
+  posicion_id: string;
+  activo_id: string;
+  ticker: string;
+  nombre: string;
+  tipo: string;
+  cantidad: string;
+  precio_medio: string;
+  precio_actual: string | null;
+  moneda: string;
+  variacion_dia: string | null;
+  actualizado_en: string | null;
+  valor_coste: string;
+  valor_actual: string;
+  pl_absoluto: string;
+  pl_pct: string;
+}
+
+export interface ModoViajeOut {
+  id: string;
+  workspace_id: string;
+  nombre: string;
+  fecha_inicio: string;
+  fecha_fin: string | null;
+  etiqueta_id: string | null;
+  activo: boolean;
+  creado_en: string;
+}
+
+export interface TopCategoria {
+  categoria_id: string | null;
+  nombre: string;
+  total: string;
+  pct: string;
+}
+
+export interface CierreMensual {
+  anio: number;
+  mes: number;
+  ingresos: string;
+  gastos: string;
+  balance: string;
+  tasa_ahorro: string;
+  num_movimientos: number;
+  top_categorias: TopCategoria[];
+  vs_mes_anterior: {
+    gastos_anterior: string;
+    ingresos_anterior: string;
+    variacion_gastos_pct: string | null;
+    variacion_ingresos_pct: string | null;
+  };
+}
