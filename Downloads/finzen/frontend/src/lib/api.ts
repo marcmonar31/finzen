@@ -1,9 +1,10 @@
 import { useUsuarioStore } from "@/stores/usuario";
 import { useWorkspaceStore } from "@/stores/workspace";
+import { IS_SUPABASE_ENABLED, getAccessToken } from "@/lib/supabase";
 
 const API_BASE = "/api";
 
-function getHeaders(): HeadersInit {
+async function getHeaders(): Promise<HeadersInit> {
   const usuario = useUsuarioStore.getState().usuario;
   const workspace = useWorkspaceStore.getState().workspace;
 
@@ -11,7 +12,15 @@ function getHeaders(): HeadersInit {
     "Content-Type": "application/json",
   };
 
-  if (usuario) headers["X-User-Id"] = usuario.id;
+  if (IS_SUPABASE_ENABLED) {
+    // Modo producción: enviamos JWT de Supabase
+    const token = await getAccessToken();
+    if (token) headers["Authorization"] = `Bearer ${token}`;
+  } else {
+    // Modo local: enviamos headers de usuario y workspace directamente
+    if (usuario) headers["X-User-Id"] = usuario.id;
+  }
+
   if (workspace) headers["X-Workspace-Id"] = workspace.id;
 
   return headers;
@@ -20,9 +29,10 @@ function getHeaders(): HeadersInit {
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   let res: Response;
   try {
+    const headers = await getHeaders();
     res = await fetch(`${API_BASE}${path}`, {
       ...init,
-      headers: { ...getHeaders(), ...init?.headers },
+      headers: { ...headers, ...init?.headers },
     });
   } catch {
     throw new Error("No se puede conectar con el servidor. ¿Está el backend activo?");

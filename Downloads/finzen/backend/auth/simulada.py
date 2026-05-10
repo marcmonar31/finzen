@@ -1,14 +1,14 @@
-from fastapi import Header, HTTPException, Depends
-from sqlmodel import Session, select
-from database import get_session
+from fastapi import HTTPException, Request
+from sqlmodel import Session
 from models.usuario import Usuario
 
 
-def get_current_user(
-    x_user_id: str = Header(..., alias="X-User-Id"),
-    session: Session = Depends(get_session),
-) -> Usuario:
-    user = session.get(Usuario, x_user_id)
+def get_current_user(request: Request, session: Session) -> Usuario:
+    """Auth simulada: lee X-User-Id header directamente."""
+    user_id = request.headers.get("X-User-Id")
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Header X-User-Id requerido (modo local)")
+    user = session.get(Usuario, user_id)
     if not user or not user.activo:
         raise HTTPException(status_code=401, detail="Usuario no autenticado")
     return user

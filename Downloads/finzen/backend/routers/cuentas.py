@@ -8,7 +8,7 @@ from models.cuenta import Cuenta
 from models.movimiento import Movimiento
 from models.workspace import Workspace
 from models.usuario import Usuario
-from auth.simulada import get_current_user
+from deps import get_current_user
 from deps import get_current_workspace
 from schemas.cuenta import CuentaCreate, CuentaUpdate, CuentaOut
 from services.saldos import saldo_cuenta

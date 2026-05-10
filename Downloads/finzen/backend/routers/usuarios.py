@@ -5,7 +5,7 @@ from database import get_session
 from models.usuario import Usuario
 from models.miembro import WorkspaceMiembro
 from models.workspace import Workspace
-from auth.simulada import get_current_user
+from deps import get_current_user
 from schemas.usuario import UsuarioOut
 from schemas.workspace import WorkspaceConRol
 

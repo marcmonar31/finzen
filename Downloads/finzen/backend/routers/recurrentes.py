@@ -9,7 +9,7 @@ from models.cuenta import Cuenta
 from models.categoria import Categoria
 from models.workspace import Workspace
 from models.usuario import Usuario
-from auth.simulada import get_current_user
+from deps import get_current_user
 from deps import get_current_workspace
 from schemas.recurrente import RecurrenteCreate, RecurrenteUpdate, RecurrenteOut
 from services.recurrentes_svc import calcular_proxima_ejecucion

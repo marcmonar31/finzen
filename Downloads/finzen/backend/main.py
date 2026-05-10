@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 from apscheduler.schedulers.background import BackgroundScheduler
 
 from database import create_db_and_tables
-from routers import usuarios, workspaces, cuentas, categorias, etiquetas, movimientos, transferencias, presupuestos, recurrentes, amigos, grupos, reglas, objetivos, deudas, insights, inversiones, modos, cierre
+from routers import usuarios, workspaces, cuentas, categorias, etiquetas, movimientos, transferencias, presupuestos, recurrentes, amigos, grupos, reglas, objetivos, deudas, insights, inversiones, modos, cierre, auth as auth_router
 
 scheduler = BackgroundScheduler()
 
@@ -29,14 +29,24 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+from config import settings
+
+_CORS_ORIGINS = ["http://localhost:5173", "http://127.0.0.1:5173"]
+if not settings.is_local:
+    # En producción añadir el dominio de Vercel — configura FRONTEND_URL en .env
+    import os
+    if url := os.getenv("FRONTEND_URL"):
+        _CORS_ORIGINS.append(url)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_origins=_CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+app.include_router(auth_router.router)
 app.include_router(usuarios.router)
 app.include_router(workspaces.router)
 app.include_router(cuentas.router)

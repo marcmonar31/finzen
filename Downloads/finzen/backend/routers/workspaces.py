@@ -4,7 +4,7 @@ from database import get_session
 from models.workspace import Workspace
 from models.miembro import WorkspaceMiembro
 from models.usuario import Usuario
-from auth.simulada import get_current_user
+from deps import get_current_user
 from schemas.workspace import WorkspaceOut
 
 router = APIRouter(prefix="/workspaces", tags=["workspaces"])

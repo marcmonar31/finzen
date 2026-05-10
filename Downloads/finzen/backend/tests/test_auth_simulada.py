@@ -1,6 +1,6 @@
 """
 Tests de autenticación simulada.
-- Sin header → 422 (campo requerido faltante)
+- Sin header → 401 (nuestro código devuelve 401, no 422)
 - Header inválido → 401
 - Header válido → 200
 - Usuario sin acceso al workspace → 403
@@ -11,7 +11,7 @@ from sqlmodel import Session
 
 def test_get_me_sin_header(client: TestClient):
     resp = client.get("/usuarios/me")
-    assert resp.status_code == 422
+    assert resp.status_code == 401
 
 
 def test_get_me_usuario_invalido(client: TestClient):

@@ -7,7 +7,7 @@ from sqlmodel import Session, select
 from database import get_session
 from models.presupuesto import Presupuesto
 from models.workspace import Workspace
-from auth.simulada import get_current_user
+from deps import get_current_user
 from deps import get_current_workspace
 from schemas.presupuesto import PresupuestoCreate, PresupuestoUpdate, PresupuestoOut, EstadoPresupuesto
 from services.presupuestos_calc import calcular_estado

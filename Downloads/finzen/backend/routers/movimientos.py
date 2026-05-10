@@ -11,7 +11,7 @@ from models.categoria import Categoria
 from models.etiqueta import Etiqueta
 from models.workspace import Workspace
 from models.usuario import Usuario
-from auth.simulada import get_current_user
+from deps import get_current_user
 from deps import get_current_workspace
 from schemas.movimiento import MovimientoCreate, MovimientoUpdate, MovimientoOut
 from services.conversion import convertir
