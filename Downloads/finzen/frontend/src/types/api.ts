@@ -17,3 +17,67 @@ export interface Workspace {
   creado_en: string;
   rol?: string;
 }
+
+export interface Cuenta {
+  id: string;
+  workspace_id: string;
+  nombre: string;
+  tipo: string;
+  moneda: string;
+  saldo_inicial: string;
+  fecha_saldo_inicial: string;
+  emoji: string | null;
+  color: string | null;
+  institucion: string | null;
+  iban_ultimos4: string | null;
+  notas: string | null;
+  incluir_en_patrimonio: boolean;
+  orden: number;
+  archivado_en: string | null;
+  creado_en: string;
+  saldo: string | null;
+}
+
+export interface Categoria {
+  id: string;
+  workspace_id: string;
+  nombre: string;
+  tipo: string;
+  parent_id: string | null;
+  emoji: string | null;
+  color: string | null;
+  orden: number;
+  archivado_en: string | null;
+  creado_en: string;
+  hijos: Categoria[];
+}
+
+export interface Movimiento {
+  id: string;
+  workspace_id: string;
+  cuenta_id: string;
+  tipo: string;
+  importe: string;
+  moneda: string;
+  importe_base: string;
+  tasa_cambio: string;
+  fecha: string;
+  categoria_id: string | null;
+  concepto: string;
+  notas: string | null;
+  estado: string;
+  fuente: string;
+  hash_idempotencia: string | null;
+  archivado_en: string | null;
+  creado_por: string;
+  creado_en: string;
+  actualizado_en: string;
+  categoria_emoji: string | null;
+  categoria_nombre: string | null;
+}
+
+export interface ResumenDashboard {
+  saldo_total: string;
+  moneda_base: string;
+  ultimos_movimientos: Movimiento[];
+}

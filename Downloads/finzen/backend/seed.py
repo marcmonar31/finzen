@@ -1,6 +1,7 @@
 """
-Crea usuarios demo y workspaces de ejemplo.
+Crea usuarios demo y workspaces de ejemplo con categorías y cuentas por defecto.
 Ejecutar: python seed.py
+Es idempotente: puede correrse varias veces sin duplicar datos.
 """
 import sys
 import os
@@ -12,6 +13,7 @@ from database import engine
 from models.usuario import Usuario
 from models.workspace import Workspace
 from models.miembro import WorkspaceMiembro
+from services.workspace_defaults import seed_workspace_defaults
 
 
 USUARIOS_DEMO = [
@@ -24,45 +26,60 @@ USUARIOS_DEMO = [
 def seed():
     with Session(engine) as session:
         usuarios_existentes = session.exec(select(Usuario)).all()
-        if usuarios_existentes:
-            print("Base de datos ya tiene datos. Saltando seed.")
-            return
 
-        usuarios = []
-        for datos in USUARIOS_DEMO:
-            u = Usuario(**datos)
-            session.add(u)
-            usuarios.append(u)
-        session.flush()
+        if not usuarios_existentes:
+            usuarios = []
+            for datos in USUARIOS_DEMO:
+                u = Usuario(**datos)
+                session.add(u)
+                usuarios.append(u)
+            session.flush()
 
-        martin, maria, pedro = usuarios
+            martin, maria, pedro = usuarios
 
-        ws_martin = Workspace(nombre="Personal Martín", emoji="🏠", moneda_base="EUR", owner_id=martin.id)
-        ws_maria = Workspace(nombre="Personal María", emoji="🌸", moneda_base="EUR", owner_id=maria.id)
-        ws_pedro = Workspace(nombre="Personal Pedro", emoji="⚡", moneda_base="EUR", owner_id=pedro.id)
-        ws_familia = Workspace(nombre="Familia García", emoji="👨‍👩‍👧", moneda_base="EUR", owner_id=martin.id)
+            workspaces_data = [
+                (Workspace(nombre="Personal Martín", emoji="🏠", moneda_base="EUR", owner_id=martin.id), martin.id),
+                (Workspace(nombre="Personal María", emoji="🌸", moneda_base="EUR", owner_id=maria.id), maria.id),
+                (Workspace(nombre="Personal Pedro", emoji="⚡", moneda_base="EUR", owner_id=pedro.id), pedro.id),
+                (Workspace(nombre="Familia García", emoji="👨‍👩‍👧", moneda_base="EUR", owner_id=martin.id), martin.id),
+            ]
 
-        for ws in [ws_martin, ws_maria, ws_pedro, ws_familia]:
-            session.add(ws)
-        session.flush()
+            workspaces = []
+            for ws, _ in workspaces_data:
+                session.add(ws)
+                workspaces.append(ws)
+            session.flush()
 
-        membresias = [
-            WorkspaceMiembro(workspace_id=ws_martin.id, usuario_id=martin.id, rol="owner"),
-            WorkspaceMiembro(workspace_id=ws_maria.id, usuario_id=maria.id, rol="owner"),
-            WorkspaceMiembro(workspace_id=ws_pedro.id, usuario_id=pedro.id, rol="owner"),
-            WorkspaceMiembro(workspace_id=ws_familia.id, usuario_id=martin.id, rol="owner"),
-            WorkspaceMiembro(workspace_id=ws_familia.id, usuario_id=maria.id, rol="editor"),
-            WorkspaceMiembro(workspace_id=ws_familia.id, usuario_id=pedro.id, rol="editor"),
-        ]
-        for m in membresias:
-            session.add(m)
+            ws_martin, ws_maria, ws_pedro, ws_familia = workspaces
 
-        session.commit()
+            membresias = [
+                WorkspaceMiembro(workspace_id=ws_martin.id, usuario_id=martin.id, rol="owner"),
+                WorkspaceMiembro(workspace_id=ws_maria.id, usuario_id=maria.id, rol="owner"),
+                WorkspaceMiembro(workspace_id=ws_pedro.id, usuario_id=pedro.id, rol="owner"),
+                WorkspaceMiembro(workspace_id=ws_familia.id, usuario_id=martin.id, rol="owner"),
+                WorkspaceMiembro(workspace_id=ws_familia.id, usuario_id=maria.id, rol="editor"),
+                WorkspaceMiembro(workspace_id=ws_familia.id, usuario_id=pedro.id, rol="editor"),
+            ]
+            for m in membresias:
+                session.add(m)
+            session.flush()
 
-        print("Seed completado:")
-        for u in usuarios:
-            print(f"  Usuario @{u.usuario_unico} — id: {u.id}")
-        print(f"  Workspace 'Familia García' — id: {ws_familia.id}")
+            for ws, owner_id in workspaces_data:
+                seed_workspace_defaults(ws.id, owner_id, session)
+
+            session.commit()
+
+            print("Seed completado:")
+            for u in usuarios:
+                print(f"  Usuario @{u.usuario_unico} — id: {u.id}")
+        else:
+            # Idempotente: siembra defaults para workspaces que no los tengan aún
+            print("Usuarios ya existen. Comprobando defaults de workspaces…")
+            all_ws = session.exec(select(Workspace)).all()
+            for ws in all_ws:
+                seed_workspace_defaults(ws.id, ws.owner_id, session)
+            session.commit()
+            print(f"  Defaults comprobados para {len(all_ws)} workspace(s).")
 
 
 if __name__ == "__main__":

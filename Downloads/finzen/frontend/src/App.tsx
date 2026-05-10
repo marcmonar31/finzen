@@ -4,13 +4,15 @@ import { useWorkspaceStore } from "@/stores/workspace";
 import { SelectorUsuarioDemo } from "@/components/SelectorUsuarioDemo";
 import { MinimizableShell } from "@/components/MinimizableShell";
 import { Dashboard } from "@/pages/Dashboard";
+import { Cuentas } from "@/pages/Cuentas";
+import { Movimientos } from "@/pages/Movimientos";
 import { Placeholder } from "@/pages/Placeholder";
 import { Toaster } from "@/components/ui/sonner";
 
 const SECTION_PAGES: Record<string, React.ReactNode> = {
   dashboard: <Dashboard />,
-  cuentas: <Placeholder emoji="💳" titulo="Cuentas" />,
-  movimientos: <Placeholder emoji="📋" titulo="Movimientos" />,
+  cuentas: <Cuentas />,
+  movimientos: <Movimientos />,
   presupuestos: <Placeholder emoji="📊" titulo="Presupuestos" />,
   objetivos: <Placeholder emoji="🎯" titulo="Objetivos" />,
   reglas: <Placeholder emoji="⚡" titulo="Reglas" />,

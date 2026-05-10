@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
 from database import create_db_and_tables
-from routers import usuarios, workspaces
+from routers import usuarios, workspaces, cuentas, categorias, etiquetas, movimientos
 
 
 @asynccontextmanager
@@ -28,6 +28,10 @@ app.add_middleware(
 
 app.include_router(usuarios.router)
 app.include_router(workspaces.router)
+app.include_router(cuentas.router)
+app.include_router(categorias.router)
+app.include_router(etiquetas.router)
+app.include_router(movimientos.router)
 
 
 @app.get("/health")
