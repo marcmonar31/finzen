@@ -1,7 +1,7 @@
 import { useUsuarioStore } from "@/stores/usuario";
 import { useWorkspaceStore } from "@/stores/workspace";
 
-const API_BASE = "http://localhost:8000";
+const API_BASE = "/api";
 
 function getHeaders(): HeadersInit {
   const usuario = useUsuarioStore.getState().usuario;
