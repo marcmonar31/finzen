@@ -134,3 +134,95 @@ export interface Recurrente {
   notas: string | null;
   creado_en: string;
 }
+
+// ─── Bloque 5: Amigos y grupos compartidos ───────────────────────────────────
+
+export interface AmigoOut {
+  id: string;
+  usuario_id: string;
+  nombre: string;
+  usuario_unico: string;
+  avatar_emoji: string;
+  estado: "pendiente" | "aceptado";
+  soy_solicitante: boolean;
+}
+
+export interface AmigoExternoOut {
+  id: string;
+  nombre: string;
+  email: string | null;
+  telefono: string | null;
+  usuario_real_id: string | null;
+  creado_en: string;
+}
+
+export interface GrupoMiembroOut {
+  id: string;
+  grupo_id: string;
+  usuario_id: string | null;
+  externo_id: string | null;
+  nombre_display: string;
+  rol: string;
+  activo: boolean;
+}
+
+export interface GrupoOut {
+  id: string;
+  nombre: string;
+  emoji: string;
+  descripcion: string | null;
+  moneda_principal: string;
+  es_cuenta_real: boolean;
+  cuenta_id: string | null;
+  modo_reparto_default: string;
+  creado_por: string;
+  creado_en: string;
+  cerrado_en: string | null;
+  miembros: GrupoMiembroOut[];
+}
+
+export interface GastoRepartoOut {
+  id: string;
+  miembro_id: string;
+  importe_asignado: string;
+  partes: number | null;
+  porcentaje: string | null;
+}
+
+export interface GastoCompartidoOut {
+  id: string;
+  grupo_id: string;
+  concepto: string;
+  importe: string;
+  moneda: string;
+  importe_convertido: string;
+  tasa_cambio: string;
+  fecha: string;
+  categoria_id: string | null;
+  pagador_id: string;
+  modo_reparto: string;
+  afecta_cuenta_personal: boolean;
+  movimiento_id: string | null;
+  creado_por: string;
+  creado_en: string;
+  repartos: GastoRepartoOut[];
+}
+
+export interface LiquidacionOut {
+  id: string;
+  grupo_id: string;
+  de_miembro_id: string;
+  a_miembro_id: string;
+  importe: string;
+  moneda: string;
+  movimiento_pago_id: string | null;
+  movimiento_cobro_id: string | null;
+  estado: "pendiente" | "confirmada" | "rechazada";
+  creado_en: string;
+  confirmado_en: string | null;
+}
+
+export interface BalanceGrupoOut {
+  balance: Record<string, string>;
+  transferencias_optimas: Array<{ de: string; a: string; importe: string }>;
+}

@@ -9,6 +9,8 @@ import { Movimientos } from "@/pages/Movimientos";
 import { Transferencias } from "@/pages/Transferencias";
 import { Presupuestos } from "@/pages/Presupuestos";
 import { Recurrentes } from "@/pages/Recurrentes";
+import { Amigos } from "@/pages/Amigos";
+import { Grupos } from "@/pages/Grupos";
 import { Placeholder } from "@/pages/Placeholder";
 import { Toaster } from "@/components/ui/sonner";
 
@@ -21,8 +23,8 @@ const SECTION_PAGES: Record<string, React.ReactNode> = {
   recurrentes: <Recurrentes />,
   objetivos: <Placeholder emoji="🎯" titulo="Objetivos" />,
   reglas: <Placeholder emoji="⚡" titulo="Reglas" />,
-  amigos: <Placeholder emoji="👥" titulo="Amigos" />,
-  grupos: <Placeholder emoji="🤝" titulo="Grupos" />,
+  amigos: <Amigos />,
+  grupos: <Grupos />,
   deudas: <Placeholder emoji="💸" titulo="Deudas" />,
   inversiones: <Placeholder emoji="📈" titulo="Inversiones" />,
   insights: <Placeholder emoji="💡" titulo="Insights" />,

@@ -9,6 +9,8 @@ from models.tipo_cambio import TipoCambio
 from models.transferencia import Transferencia
 from models.presupuesto import Presupuesto
 from models.recurrente import Recurrente
+from models.amigo import Amigo, AmigoExterno
+from models.grupo import Grupo, GrupoMiembro, GastoCompartido, GastoReparto, Liquidacion
 
 __all__ = [
     "Usuario", "Workspace", "WorkspaceMiembro",
@@ -16,4 +18,6 @@ __all__ = [
     "Movimiento", "MovimientoEtiqueta",
     "TipoCambio", "Transferencia",
     "Presupuesto", "Recurrente",
+    "Amigo", "AmigoExterno",
+    "Grupo", "GrupoMiembro", "GastoCompartido", "GastoReparto", "Liquidacion",
 ]

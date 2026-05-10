@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 from apscheduler.schedulers.background import BackgroundScheduler
 
 from database import create_db_and_tables
-from routers import usuarios, workspaces, cuentas, categorias, etiquetas, movimientos, transferencias, presupuestos, recurrentes
+from routers import usuarios, workspaces, cuentas, categorias, etiquetas, movimientos, transferencias, presupuestos, recurrentes, amigos, grupos
 
 scheduler = BackgroundScheduler()
 
@@ -44,6 +44,8 @@ app.include_router(movimientos.router)
 app.include_router(transferencias.router)
 app.include_router(presupuestos.router)
 app.include_router(recurrentes.router)
+app.include_router(amigos.router)
+app.include_router(grupos.router)
 
 
 @app.get("/health")
