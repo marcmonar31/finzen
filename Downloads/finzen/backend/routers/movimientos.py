@@ -94,7 +94,7 @@ def crear(
     if existente:
         raise HTTPException(409, "Movimiento duplicado (hash de idempotencia coincide)")
 
-    importe_base, tasa = convertir(body.importe, body.moneda, workspace.moneda_base)
+    importe_base, tasa = convertir(body.importe, body.moneda, workspace.moneda_base, body.fecha, session)
 
     mov = Movimiento(
         workspace_id=workspace.id,

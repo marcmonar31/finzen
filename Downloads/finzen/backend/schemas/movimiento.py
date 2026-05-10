@@ -73,6 +73,7 @@ class MovimientoOut(BaseModel):
     categoria_id: Optional[str]
     concepto: str
     notas: Optional[str]
+    transferencia_id: Optional[str]
     estado: str
     fuente: str
     hash_idempotencia: Optional[str]

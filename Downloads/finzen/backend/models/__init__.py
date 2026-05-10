@@ -5,9 +5,12 @@ from models.cuenta import Cuenta
 from models.categoria import Categoria
 from models.etiqueta import Etiqueta
 from models.movimiento import Movimiento, MovimientoEtiqueta
+from models.tipo_cambio import TipoCambio
+from models.transferencia import Transferencia
 
 __all__ = [
     "Usuario", "Workspace", "WorkspaceMiembro",
     "Cuenta", "Categoria", "Etiqueta",
     "Movimiento", "MovimientoEtiqueta",
+    "TipoCambio", "Transferencia",
 ]

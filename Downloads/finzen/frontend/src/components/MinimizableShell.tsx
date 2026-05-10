@@ -6,6 +6,7 @@ const SECTIONS = [
   { id: "dashboard", emoji: "🏠", label: "Inicio" },
   { id: "cuentas", emoji: "💳", label: "Cuentas" },
   { id: "movimientos", emoji: "📋", label: "Movimientos" },
+  { id: "transferencias", emoji: "🔄", label: "Transfers" },
   { id: "presupuestos", emoji: "📊", label: "Presupuestos" },
   { id: "objetivos", emoji: "🎯", label: "Objetivos" },
   { id: "reglas", emoji: "⚡", label: "Reglas" },

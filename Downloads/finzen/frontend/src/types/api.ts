@@ -65,6 +65,7 @@ export interface Movimiento {
   categoria_id: string | null;
   concepto: string;
   notas: string | null;
+  transferencia_id: string | null;
   estado: string;
   fuente: string;
   hash_idempotencia: string | null;
@@ -74,6 +75,16 @@ export interface Movimiento {
   actualizado_en: string;
   categoria_emoji: string | null;
   categoria_nombre: string | null;
+}
+
+export interface Transferencia {
+  id: string;
+  workspace_id: string;
+  movimiento_origen_id: string;
+  movimiento_destino_id: string;
+  creado_en: string;
+  movimiento_origen: Movimiento | null;
+  movimiento_destino: Movimiento | null;
 }
 
 export interface ResumenDashboard {

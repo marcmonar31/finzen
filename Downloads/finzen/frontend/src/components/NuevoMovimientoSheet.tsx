@@ -8,6 +8,7 @@ import { useCuentas } from "@/hooks/useCuentas";
 import { useCategorias } from "@/hooks/useCategorias";
 import { useCrearMovimiento } from "@/hooks/useMovimientos";
 import { isoToday } from "@/lib/format";
+import { SelectorMoneda } from "@/components/SelectorMoneda";
 import { clsx } from "clsx";
 import { toast } from "sonner";
 
@@ -31,6 +32,7 @@ interface Props {
 export function NuevoMovimientoSheet({ open, onClose }: Props) {
   const { data: cuentas = [] } = useCuentas();
   const [tipo, setTipo] = useState<"ingreso" | "gasto">("gasto");
+  const [moneda, setMoneda] = useState("EUR");
   const { data: categorias = [] } = useCategorias(tipo);
   const crear = useCrearMovimiento();
 
@@ -40,6 +42,9 @@ export function NuevoMovimientoSheet({ open, onClose }: Props) {
   });
 
   const catId = watch("categoria_id");
+  const cuentaId = watch("cuenta_id");
+
+  const cuentaSeleccionada = cuentas.find((c) => c.id === cuentaId);
 
   function handleTipo(t: "ingreso" | "gasto") {
     setTipo(t);
@@ -47,12 +52,19 @@ export function NuevoMovimientoSheet({ open, onClose }: Props) {
     setValue("categoria_id", "");
   }
 
+  function handleCuenta(e: React.ChangeEvent<HTMLSelectElement>) {
+    const id = e.target.value;
+    setValue("cuenta_id", id);
+    const cuenta = cuentas.find((c) => c.id === id);
+    if (cuenta) setMoneda(cuenta.moneda);
+  }
+
   async function onSubmit(data: FormValues) {
     try {
       await crear.mutateAsync({
         ...data,
         importe: parseFloat(data.importe).toFixed(4),
-        moneda: cuentas.find((c) => c.id === data.cuenta_id)?.moneda ?? "EUR",
+        moneda,
         categoria_id: data.categoria_id || null,
       });
       toast.success("Movimiento añadido");
@@ -68,7 +80,6 @@ export function NuevoMovimientoSheet({ open, onClose }: Props) {
     <AnimatePresence>
       {open && (
         <>
-          {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -76,8 +87,6 @@ export function NuevoMovimientoSheet({ open, onClose }: Props) {
             className="fixed inset-0 bg-black/40 z-40"
             onClick={onClose}
           />
-
-          {/* Sheet */}
           <motion.div
             initial={{ y: "100%" }}
             animate={{ y: 0 }}
@@ -86,7 +95,6 @@ export function NuevoMovimientoSheet({ open, onClose }: Props) {
             className="fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-3xl max-h-[90vh] overflow-y-auto"
           >
             <form onSubmit={handleSubmit(onSubmit)} className="p-5 space-y-4">
-              {/* Header */}
               <div className="flex items-center justify-between">
                 <h2 className="font-bold text-lg text-ink">Nuevo movimiento</h2>
                 <button type="button" onClick={onClose} className="w-8 h-8 rounded-full bg-[#F2F2F4] flex items-center justify-center">
@@ -111,17 +119,27 @@ export function NuevoMovimientoSheet({ open, onClose }: Props) {
                 ))}
               </div>
 
-              {/* Importe */}
+              {/* Importe + moneda */}
               <div>
-                <input
-                  {...register("importe")}
-                  type="number"
-                  step="0.01"
-                  placeholder="0,00"
-                  className="w-full text-center text-4xl font-bold text-ink bg-transparent border-b-2 border-[#E8E8EA] pb-2 focus:outline-none focus:border-ink placeholder:text-[#D0D0D4]"
-                  inputMode="decimal"
-                />
+                <div className="flex items-end gap-3">
+                  <input
+                    {...register("importe")}
+                    type="number"
+                    step="0.01"
+                    placeholder="0,00"
+                    className="flex-1 text-center text-4xl font-bold text-ink bg-transparent border-b-2 border-[#E8E8EA] pb-2 focus:outline-none focus:border-ink placeholder:text-[#D0D0D4]"
+                    inputMode="decimal"
+                  />
+                  <div className="pb-2">
+                    <SelectorMoneda value={moneda} onChange={setMoneda} />
+                  </div>
+                </div>
                 {errors.importe && <p className="text-xs text-red-500 text-center mt-1">{errors.importe.message}</p>}
+                {cuentaSeleccionada && cuentaSeleccionada.moneda !== moneda && (
+                  <p className="text-xs text-[#6B6B6F] text-center mt-1">
+                    Se convertirá a {cuentaSeleccionada.moneda} con la tasa del día
+                  </p>
+                )}
               </div>
 
               {/* Concepto */}
@@ -138,6 +156,7 @@ export function NuevoMovimientoSheet({ open, onClose }: Props) {
               <div className="relative">
                 <select
                   {...register("cuenta_id")}
+                  onChange={handleCuenta}
                   className="w-full bg-[#F2F2F4] rounded-xl px-4 py-3 text-sm text-ink appearance-none focus:outline-none focus:ring-2 focus:ring-ink/20"
                 >
                   <option value="">Elige una cuenta</option>
@@ -151,7 +170,7 @@ export function NuevoMovimientoSheet({ open, onClose }: Props) {
                 {errors.cuenta_id && <p className="text-xs text-red-500 mt-1">{errors.cuenta_id.message}</p>}
               </div>
 
-              {/* Categorías grid */}
+              {/* Categorías */}
               {categorias.length > 0 && (
                 <div>
                   <p className="text-xs text-[#6B6B6F] mb-2 font-medium">Categoría</p>
@@ -183,7 +202,6 @@ export function NuevoMovimientoSheet({ open, onClose }: Props) {
                 />
               </div>
 
-              {/* Submit */}
               <button
                 type="submit"
                 disabled={crear.isPending}

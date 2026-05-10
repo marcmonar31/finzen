@@ -6,6 +6,7 @@ import { MinimizableShell } from "@/components/MinimizableShell";
 import { Dashboard } from "@/pages/Dashboard";
 import { Cuentas } from "@/pages/Cuentas";
 import { Movimientos } from "@/pages/Movimientos";
+import { Transferencias } from "@/pages/Transferencias";
 import { Placeholder } from "@/pages/Placeholder";
 import { Toaster } from "@/components/ui/sonner";
 
@@ -13,6 +14,7 @@ const SECTION_PAGES: Record<string, React.ReactNode> = {
   dashboard: <Dashboard />,
   cuentas: <Cuentas />,
   movimientos: <Movimientos />,
+  transferencias: <Transferencias />,
   presupuestos: <Placeholder emoji="📊" titulo="Presupuestos" />,
   objetivos: <Placeholder emoji="🎯" titulo="Objetivos" />,
   reglas: <Placeholder emoji="⚡" titulo="Reglas" />,
