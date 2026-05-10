@@ -121,6 +121,14 @@ def crear(
 
     session.commit()
     session.refresh(mov)
+
+    # Disparar motor de reglas (no crítico: fallo no cancela el movimiento)
+    try:
+        from services.reglas_engine import procesar_movimiento_creado
+        procesar_movimiento_creado(mov, session)
+    except Exception:
+        pass
+
     return _enrich(mov, session)
 
 

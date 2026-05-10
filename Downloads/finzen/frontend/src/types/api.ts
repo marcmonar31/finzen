@@ -226,3 +226,33 @@ export interface BalanceGrupoOut {
   balance: Record<string, string>;
   transferencias_optimas: Array<{ de: string; a: string; importe: string }>;
 }
+
+// ─── Bloque 6: Motor de reglas ────────────────────────────────────────────────
+
+export interface ReglaOut {
+  id: string;
+  workspace_id: string;
+  nombre: string;
+  descripcion: string | null;
+  trigger_tipo: string;
+  trigger_config: Record<string, unknown>;
+  condiciones: Array<Record<string, unknown>>;
+  modo_condiciones: "AND" | "OR";
+  acciones: Array<Record<string, unknown>>;
+  activa: boolean;
+  orden: number;
+  max_ejecuciones_mes: number | null;
+  ultima_ejecucion: string | null;
+  creado_en: string;
+}
+
+export interface ReglaEjecucionOut {
+  id: string;
+  regla_id: string;
+  trigger_movimiento_id: string | null;
+  estado: "exito" | "error" | "omitida" | "simulacion";
+  movimientos_creados_ids: string[];
+  razon_omision: string | null;
+  error: string | null;
+  ejecutado_en: string;
+}
