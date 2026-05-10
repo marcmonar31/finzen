@@ -12,6 +12,8 @@ from models.recurrente import Recurrente
 from models.amigo import Amigo, AmigoExterno
 from models.grupo import Grupo, GrupoMiembro, GastoCompartido, GastoReparto, Liquidacion
 from models.regla import Regla, ReglaEjecucion
+from models.objetivo import Objetivo, ObjetivoAportacion
+from models.deuda import Deuda
 
 __all__ = [
     "Usuario", "Workspace", "WorkspaceMiembro",
@@ -22,4 +24,5 @@ __all__ = [
     "Amigo", "AmigoExterno",
     "Grupo", "GrupoMiembro", "GastoCompartido", "GastoReparto", "Liquidacion",
     "Regla", "ReglaEjecucion",
+    "Objetivo", "ObjetivoAportacion", "Deuda",
 ]

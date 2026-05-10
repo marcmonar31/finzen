@@ -246,6 +246,115 @@ export interface ReglaOut {
   creado_en: string;
 }
 
+// ─── Bloque 7: Objetivos, Deudas, Insights ───────────────────────────────────
+
+export interface ObjetivoOut {
+  id: string;
+  workspace_id: string;
+  nombre: string;
+  descripcion: string | null;
+  emoji: string;
+  importe_objetivo: string;
+  moneda: string;
+  fecha_objetivo: string | null;
+  cuenta_id: string | null;
+  activo: boolean;
+  creado_en: string;
+  importe_aportado: string;
+  porcentaje: number;
+  falta: string;
+}
+
+export interface AportacionOut {
+  id: string;
+  objetivo_id: string;
+  importe: string;
+  moneda: string;
+  fecha: string;
+  concepto: string | null;
+  movimiento_id: string | null;
+  creado_en: string;
+}
+
+export interface DeudaOut {
+  id: string;
+  workspace_id: string;
+  nombre: string;
+  descripcion: string | null;
+  tipo: string;
+  importe_total: string;
+  moneda: string;
+  tasa_interes_anual: string;
+  num_cuotas: number | null;
+  importe_cuota: string | null;
+  fecha_inicio: string;
+  dia_cuota: number;
+  cuenta_id: string | null;
+  activa: boolean;
+  creado_en: string;
+}
+
+export interface CuotaOut {
+  numero: number;
+  fecha: string;
+  importe: string;
+  capital: string;
+  intereses: string;
+  saldo_pendiente: string;
+}
+
+export interface InsightPrediccion {
+  dias: number;
+  fecha: string;
+  saldo_proyectado: string;
+  impacto_recurrentes: string;
+  gasto_proyectado: string;
+}
+
+export interface InsightSuscripcion {
+  concepto: string;
+  concepto_normalizado: string;
+  importe_medio: string;
+  moneda: string;
+  num_ocurrencias: number;
+  ultima_fecha: string;
+  categoria_id: string | null;
+}
+
+export interface InsightHormiga {
+  concepto: string;
+  num_ocurrencias_mes: number;
+  total_mes: string;
+  importe_medio: string;
+  moneda: string;
+}
+
+export interface InsightAnomalia {
+  movimiento_id: string;
+  concepto: string;
+  importe: string;
+  moneda: string;
+  importe_base: string;
+  media_categoria: string;
+  factor: string;
+  fecha: string;
+  categoria_id: string | null;
+}
+
+export interface FactorSalud {
+  nombre: string;
+  descripcion: string;
+  puntos: number;
+  max_puntos: number;
+}
+
+export interface InsightSalud {
+  score: number;
+  nivel: "excelente" | "bueno" | "regular" | "mejorable";
+  factores: FactorSalud[];
+  calculado_en: string;
+}
+
 export interface ReglaEjecucionOut {
   id: string;
   regla_id: string;
