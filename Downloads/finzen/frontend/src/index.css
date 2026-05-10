@@ -75,16 +75,32 @@
     height: 100%;
     margin: 0;
     padding: 0;
+    /* Disable pull-to-refresh and overscroll bounce on iOS/mobile */
+    overscroll-behavior: none;
+  }
+  html {
+    @apply font-sans;
+    /* Prevent text size adjustment on orientation change */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
   }
   body {
     font-family: var(--font-sans);
     background-color: #F2F2F4;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    /* Prevent overscroll glow/bounce on Android and iOS */
+    overscroll-behavior-y: none;
     @apply bg-background text-foreground;
   }
-  html {
-    @apply font-sans;
+  /* Prevent iOS zoom on input focus (requires font-size >= 16px) */
+  input, textarea, select {
+    font-size: 16px;
+    font-size: max(16px, 1em);
+  }
+  /* Surface color used in bottom sheets */
+  :root {
+    --color-surface: #ffffff;
   }
 }
 

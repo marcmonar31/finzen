@@ -18,15 +18,23 @@ function getHeaders(): HeadersInit {
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`, {
-    ...init,
-    headers: { ...getHeaders(), ...init?.headers },
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE}${path}`, {
+      ...init,
+      headers: { ...getHeaders(), ...init?.headers },
+    });
+  } catch {
+    throw new Error("No se puede conectar con el servidor. ¿Está el backend activo?");
+  }
 
   if (!res.ok) {
     const error = await res.json().catch(() => ({ detail: res.statusText }));
     throw new Error(error.detail ?? "Error desconocido");
   }
+
+  // 204 No Content — nothing to parse
+  if (res.status === 204) return undefined as unknown as T;
 
   return res.json() as Promise<T>;
 }
