@@ -92,3 +92,45 @@ export interface ResumenDashboard {
   moneda_base: string;
   ultimos_movimientos: Movimiento[];
 }
+
+export interface EstadoPresupuesto {
+  consumido: string;
+  restante: string;
+  porcentaje: number;
+  alerta: "ok" | "advertencia" | "superado";
+  fecha_inicio: string;
+  fecha_fin: string;
+}
+
+export interface Presupuesto {
+  id: string;
+  workspace_id: string;
+  nombre: string;
+  importe: string;
+  moneda: string;
+  periodo: string;
+  modo: string;
+  categoria_ids: string[];
+  cuenta_ids: string[];
+  orden: number;
+  activo: boolean;
+  creado_en: string;
+  estado: EstadoPresupuesto;
+}
+
+export interface Recurrente {
+  id: string;
+  workspace_id: string;
+  nombre: string;
+  tipo: string;
+  importe: string;
+  moneda: string;
+  cuenta_id: string;
+  categoria_id: string | null;
+  frecuencia: string;
+  dia_mes: number | null;
+  proxima_ejecucion: string;
+  activo: boolean;
+  notas: string | null;
+  creado_en: string;
+}

@@ -8,6 +8,7 @@ const SECTIONS = [
   { id: "movimientos", emoji: "📋", label: "Movimientos" },
   { id: "transferencias", emoji: "🔄", label: "Transfers" },
   { id: "presupuestos", emoji: "📊", label: "Presupuestos" },
+  { id: "recurrentes", emoji: "🔁", label: "Recurrentes" },
   { id: "objetivos", emoji: "🎯", label: "Objetivos" },
   { id: "reglas", emoji: "⚡", label: "Reglas" },
   { id: "amigos", emoji: "👥", label: "Amigos" },

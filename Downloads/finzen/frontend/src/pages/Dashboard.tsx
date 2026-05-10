@@ -3,8 +3,10 @@ import { Plus, Bell } from "lucide-react";
 import { useUsuarioStore } from "@/stores/usuario";
 import { useWorkspaceStore } from "@/stores/workspace";
 import { useResumenDashboard } from "@/hooks/useMovimientos";
+import { usePresupuestos } from "@/hooks/usePresupuestos";
 import { BalanceCard } from "@/components/BalanceCard";
 import { MovimientoItem } from "@/components/MovimientoItem";
+import { PresupuestoBar } from "@/components/PresupuestoBar";
 import { SelectorWorkspace } from "@/components/SelectorWorkspace";
 import { NuevoMovimientoSheet } from "@/components/NuevoMovimientoSheet";
 import { formatCurrency } from "@/lib/format";
@@ -14,7 +16,12 @@ export function Dashboard() {
   const usuario = useUsuarioStore((s) => s.usuario);
   const workspace = useWorkspaceStore((s) => s.workspace);
   const { data: resumen, isLoading } = useResumenDashboard();
+  const { data: presupuestos = [] } = usePresupuestos();
   const [showNuevo, setShowNuevo] = useState(false);
+
+  const top3Presupuestos = [...presupuestos]
+    .sort((a, b) => b.estado.porcentaje - a.estado.porcentaje)
+    .slice(0, 3);
 
   const saludo = (() => {
     const h = new Date().getHours();
@@ -97,17 +104,19 @@ export function Dashboard() {
           )}
         </div>
 
-        {/* Objetivos placeholder */}
-        <div className="px-4">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="font-bold text-ink text-base">Objetivos</h2>
-            <span className="text-xs text-[#A0A0A4]">Bloque 7</span>
+        {/* Presupuestos */}
+        {top3Presupuestos.length > 0 && (
+          <div className="px-4">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="font-bold text-ink text-base">Presupuestos</h2>
+            </div>
+            <div className="space-y-3">
+              {top3Presupuestos.map((p) => (
+                <PresupuestoBar key={p.id} presupuesto={p} />
+              ))}
+            </div>
           </div>
-          <div className="bg-white rounded-2xl p-5 flex items-center gap-3 shadow-[var(--shadow-card)]">
-            <div className="w-10 h-10 rounded-xl bg-[#F2F2F4] flex items-center justify-center text-xl">🎯</div>
-            <p className="text-sm text-[#6B6B6F]">Los objetivos llegan pronto</p>
-          </div>
-        </div>
+        )}
       </div>
 
       {/* FAB */}
