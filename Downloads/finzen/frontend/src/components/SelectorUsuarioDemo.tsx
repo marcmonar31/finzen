@@ -36,8 +36,8 @@ export function SelectorUsuarioDemo() {
       <div className="w-full max-w-sm">
         <div className="text-center mb-10">
           <div className="text-5xl mb-4">💚</div>
-          <h1 className="text-3xl font-bold text-ink mb-2">Finzen</h1>
-          <p className="text-[#6B6B6F] text-sm">Elige con quién quieres entrar</p>
+          <h1 className="text-3xl font-bold text-fg mb-2">Finzen</h1>
+          <p className="text-fg-muted text-sm">Elige con quién quieres entrar</p>
         </div>
 
         <div className="flex flex-col gap-3">
@@ -45,21 +45,21 @@ export function SelectorUsuarioDemo() {
             <button
               key={u.id}
               onClick={() => seleccionarUsuario(u)}
-              className="bg-white rounded-2xl p-4 flex items-center gap-4 shadow-[var(--shadow-card)] active:scale-[0.98] transition-transform"
+              className="bg-surface rounded-2xl p-4 flex items-center gap-4 shadow-[var(--shadow-card)] active:scale-[0.98] transition-transform"
             >
-              <div className="w-12 h-12 rounded-xl bg-[#F2F2F4] flex items-center justify-center text-2xl flex-shrink-0">
+              <div className="w-12 h-12 rounded-xl bg-surface-2 flex items-center justify-center text-2xl flex-shrink-0">
                 {u.avatar_emoji}
               </div>
               <div className="text-left">
-                <p className="font-semibold text-ink">{u.nombre}</p>
-                <p className="text-sm text-[#6B6B6F]">@{u.usuario_unico}</p>
+                <p className="font-semibold text-fg">{u.nombre}</p>
+                <p className="text-sm text-fg-muted">@{u.usuario_unico}</p>
               </div>
-              <div className="ml-auto text-[#A0A0A4] text-lg">›</div>
+              <div className="ml-auto text-fg-subtle text-lg">›</div>
             </button>
           ))}
         </div>
 
-        <p className="text-center text-xs text-[#A0A0A4] mt-8">
+        <p className="text-center text-xs text-fg-subtle mt-8">
           Modo demo — auth simulada
         </p>
       </div>

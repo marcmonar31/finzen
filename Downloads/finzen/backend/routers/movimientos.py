@@ -31,6 +31,23 @@ def _enrich(mov: Movimiento, session: Session) -> MovimientoOut:
         if cat:
             out.categoria_emoji = cat.emoji
             out.categoria_nombre = cat.nombre
+    cuenta = session.get(Cuenta, mov.cuenta_id)
+    if cuenta:
+        out.cuenta_nombre = cuenta.nombre
+    if mov.tipo in ("transferencia_origen", "transferencia_destino") and mov.transferencia_id:
+        from models.transferencia import Transferencia
+        t = session.get(Transferencia, mov.transferencia_id)
+        if t:
+            contraparte_id = (
+                t.movimiento_destino_id
+                if mov.tipo == "transferencia_origen"
+                else t.movimiento_origen_id
+            )
+            contraparte_mov = session.get(Movimiento, contraparte_id)
+            if contraparte_mov:
+                contraparte_cuenta = session.get(Cuenta, contraparte_mov.cuenta_id)
+                if contraparte_cuenta:
+                    out.cuenta_contraparte_nombre = contraparte_cuenta.nombre
     return out
 
 
@@ -207,6 +224,7 @@ def resumen_dashboard(
         select(Movimiento).where(
             Movimiento.workspace_id == workspace.id,
             Movimiento.archivado_en.is_(None),  # type: ignore[union-attr]
+            Movimiento.tipo != "transferencia_destino",  # show only origin leg for transfers
         ).order_by(Movimiento.fecha.desc(), Movimiento.creado_en.desc()).limit(5)  # type: ignore[union-attr]
     ).all()
 

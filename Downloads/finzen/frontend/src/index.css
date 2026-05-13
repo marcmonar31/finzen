@@ -75,35 +75,38 @@
     height: 100%;
     margin: 0;
     padding: 0;
-    /* Disable pull-to-refresh and overscroll bounce on iOS/mobile */
     overscroll-behavior: none;
   }
   html {
     @apply font-sans;
-    /* Prevent text size adjustment on orientation change */
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
   }
   body {
     font-family: var(--font-sans);
-    background-color: #F2F2F4;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    /* Prevent overscroll glow/bounce on Android and iOS */
     overscroll-behavior-y: none;
     @apply bg-background text-foreground;
   }
-  /* Prevent iOS zoom on input focus (requires font-size >= 16px) */
   input, textarea, select {
-    font-size: 16px;
-    font-size: max(16px, 1em);
+    font-size: 16px !important;
   }
-  /* Surface color used in bottom sheets */
-  :root {
-    --color-surface: #ffffff;
+  * {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
+  input, textarea, select, [contenteditable] {
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    user-select: text;
+    -webkit-touch-callout: default;
   }
 }
 
+/* ── shadcn variables ──────────────────────────────────────────────────────── */
 :root {
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
@@ -172,3 +175,64 @@
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
 }
+
+/* ── Landscape blocker ─────────────────────────────────────────────────────── */
+[data-no-select] {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+@media screen and (orientation: landscape) and (max-width: 1024px) {
+  #landscape-blocker {
+    display: flex !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ADAPTIVE COLOR VARIABLES
+   These are defined here (not in @theme inline) so they use var() references
+   in the utilities below. Unlayered CSS beats @layer rules in the cascade.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  --fz-app:       #F2F2F4;
+  --fz-surface:   #ffffff;
+  --fz-surface-2: #F2F2F4;
+  --fz-surface-3: #EBEBED;
+  --fz-fg:        #0A0A0A;
+  --fz-fg-muted:  #6B6B6F;
+  --fz-fg-subtle: #A0A0A4;
+  --fz-border:    #E0E0E4;
+}
+
+html.dark {
+  --fz-app:       #0F1225;
+  --fz-surface:   #1C2140;
+  --fz-surface-2: #252A45;
+  --fz-surface-3: #303558;
+  --fz-fg:        #E8EAF6;
+  --fz-fg-muted:  #9099B5;
+  --fz-fg-subtle: #6070A0;
+  --fz-border:    #303558;
+  color-scheme: dark;
+}
+
+/* ── Adaptive utilities (unlayered → overrides @theme inline in cascade) ── */
+.bg-app       { background-color: var(--fz-app)       }
+.bg-surface   { background-color: var(--fz-surface)   }
+.bg-surface-2 { background-color: var(--fz-surface-2) }
+.bg-surface-3 { background-color: var(--fz-surface-3) }
+.bg-border-ui { background-color: var(--fz-border)    }
+.text-fg        { color: var(--fz-fg)        }
+.text-fg-muted  { color: var(--fz-fg-muted)  }
+.text-fg-subtle { color: var(--fz-fg-subtle) }
+.border-border-ui { border-color: var(--fz-border) }
+.divide-border-ui > :not([hidden]) ~ :not([hidden]) { border-color: var(--fz-border) }
+
+/* ── Hover / active / focus variants for adaptive utilities ────────────── */
+.hover\:bg-surface-2:hover     { background-color: var(--fz-surface-2) }
+.hover\:bg-surface-3:hover     { background-color: var(--fz-surface-3) }
+.active\:bg-surface-2:active   { background-color: var(--fz-surface-2) }
+.active\:bg-surface-3:active   { background-color: var(--fz-surface-3) }
+.focus\:ring-ink\/20:focus     { --tw-ring-color: rgba(10,10,10,0.20); }

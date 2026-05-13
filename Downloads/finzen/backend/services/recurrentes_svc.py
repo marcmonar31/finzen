@@ -14,6 +14,9 @@ def calcular_proxima_ejecucion(
     if frecuencia == "semanal":
         return desde + timedelta(weeks=1)
 
+    if frecuencia == "cada_4_semanas":
+        return desde + timedelta(weeks=4)
+
     if frecuencia == "mensual":
         dia = dia_mes or desde.day
         mes = desde.month + 1

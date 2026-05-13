@@ -1,0 +1,172 @@
+{
+  "nav": {
+    "dashboard": "Inicio",
+    "cuentas": "Cuentas",
+    "movimientos": "Movimientos",
+    "transferencias": "Transfers",
+    "presupuestos": "Presupuesto",
+    "recurrentes": "Recurrentes",
+    "objetivos": "Objetivos",
+    "reglas": "Reglas",
+    "amigos": "Amigos",
+    "grupos": "Grupos",
+    "deudas": "Deudas",
+    "inversiones": "Inversiones",
+    "insights": "Insights",
+    "ajustes": "Ajustes"
+  },
+  "common": {
+    "guardar": "Guardar",
+    "cancelar": "Cancelar",
+    "eliminar": "Eliminar",
+    "editar": "Editar",
+    "crear": "Crear",
+    "aceptar": "Aceptar",
+    "cerrar": "Cerrar",
+    "cargando": "Cargando…",
+    "error": "Error",
+    "exito": "Guardado",
+    "proximamente": "Próximamente disponible",
+    "opcional": "opcional",
+    "activo": "Activo",
+    "inactivo": "Inactivo",
+    "activado": "Activado",
+    "desactivado": "Desactivado",
+    "nuevo": "Nuevo",
+    "sin_datos": "Sin datos",
+    "hoy": "Hoy",
+    "ayer": "Ayer"
+  },
+  "ajustes": {
+    "titulo": "Ajustes",
+    "cuenta_perfil": "Cuenta y perfil",
+    "editar_nombre": "Editar nombre",
+    "editar_email": "Editar email",
+    "cambiar_contrasena": "Cambiar contraseña",
+    "exportar_datos": "Exportar mis datos",
+    "seguridad": "Seguridad y privacidad",
+    "bloqueo_pin": "Bloqueo con PIN",
+    "ocultar_importes": "Ocultar importes",
+    "modo_emergencia": "Modo emergencia",
+    "preferencias": "Preferencias",
+    "tema": "Tema",
+    "idioma": "Idioma",
+    "moneda_principal": "Moneda principal",
+    "formato_fecha": "Formato de fecha",
+    "primer_dia_mes": "Primer día del mes",
+    "primer_dia_semana": "Primer día de la semana",
+    "notificaciones": "Notificaciones",
+    "recordatorio_diario": "Recordatorio diario",
+    "alertas_presupuesto": "Alertas de presupuesto",
+    "informacion": "Información",
+    "sobre_app": "Sobre Finzen",
+    "politica_privacidad": "Política de privacidad",
+    "terminos": "Términos de uso",
+    "ayuda": "Ayuda y soporte",
+    "cerrar_sesion": "Cerrar sesión",
+    "cerrar_sesion_confirmar": "¿Cerrar sesión?",
+    "cerrar_sesion_desc": "Tendrás que seleccionar tu perfil de nuevo al volver.",
+    "tema_claro": "Claro",
+    "tema_oscuro": "Oscuro",
+    "tema_sistema": "Sistema",
+    "lunes": "Lunes",
+    "martes": "Martes",
+    "miercoles": "Miércoles",
+    "domingo": "Domingo",
+    "sabado": "Sábado"
+  },
+  "dashboard": {
+    "saldo_total": "Saldo total",
+    "ingresar": "Ingresar",
+    "gastar": "Gastar",
+    "transferir": "Transferir",
+    "anadir": "Añadir",
+    "ultimos_movimientos": "Últimos movimientos",
+    "ver_todos": "Ver todos",
+    "presupuestos": "Presupuestos",
+    "sin_movimientos": "Sin movimientos recientes"
+  },
+  "cuentas": {
+    "titulo": "Cuentas",
+    "nueva_cuenta": "Nueva cuenta",
+    "sin_cuentas": "Aún no tienes cuentas",
+    "sin_cuentas_desc": "Añade tu primera cuenta para empezar a controlar tus finanzas.",
+    "archivadas": "Archivadas"
+  },
+  "movimientos": {
+    "titulo": "Movimientos",
+    "nuevo": "Nuevo movimiento",
+    "ingreso": "Ingreso",
+    "gasto": "Gasto",
+    "transferencia": "Transferencia",
+    "sin_movimientos": "Sin movimientos",
+    "concepto": "Concepto",
+    "importe": "Importe",
+    "fecha": "Fecha",
+    "categoria": "Categoría",
+    "cuenta": "Cuenta",
+    "notas": "Notas"
+  },
+  "presupuestos": {
+    "titulo": "Presupuestos",
+    "nuevo": "Nuevo presupuesto",
+    "sin_presupuestos": "Sin presupuestos",
+    "consumido": "Consumido",
+    "restante": "Restante",
+    "superado": "Superado"
+  },
+  "recurrentes": {
+    "titulo": "Recurrentes",
+    "nuevo": "Nuevo recurrente",
+    "sin_recurrentes": "Sin pagos recurrentes",
+    "pausar": "Pausar",
+    "reanudar": "Reanudar",
+    "proxima": "Próxima"
+  },
+  "objetivos": {
+    "titulo": "Objetivos",
+    "nuevo": "Nuevo objetivo",
+    "sin_objetivos": "Sin objetivos",
+    "aportar": "Aportar",
+    "aportado": "Aportado",
+    "objetivo": "Objetivo",
+    "falta": "Falta",
+    "fecha_limite": "Fecha límite"
+  },
+  "deudas": {
+    "titulo": "Deudas",
+    "nueva": "Nueva deuda",
+    "sin_deudas": "Sin deudas"
+  },
+  "inversiones": {
+    "titulo": "Inversiones",
+    "sin_inversiones": "Sin inversiones"
+  },
+  "reglas": {
+    "titulo": "Reglas",
+    "nueva": "Nueva regla",
+    "sin_reglas": "Sin reglas"
+  },
+  "amigos": {
+    "titulo": "Amigos",
+    "nuevo": "Añadir amigo",
+    "sin_amigos": "Sin amigos"
+  },
+  "grupos": {
+    "titulo": "Grupos",
+    "nuevo": "Nuevo grupo",
+    "sin_grupos": "Sin grupos"
+  },
+  "insights": {
+    "titulo": "Insights"
+  },
+  "meses": {
+    "1": "Enero", "2": "Febrero", "3": "Marzo", "4": "Abril",
+    "5": "Mayo", "6": "Junio", "7": "Julio", "8": "Agosto",
+    "9": "Septiembre", "10": "Octubre", "11": "Noviembre", "12": "Diciembre"
+  },
+  "dias": {
+    "lun": "Lun", "mar": "Mar", "mie": "Mié", "jue": "Jue",
+    "vie": "Vie", "sab": "Sáb", "dom": "Dom"
+  }
+}

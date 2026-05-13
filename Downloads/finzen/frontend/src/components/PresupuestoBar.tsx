@@ -34,13 +34,13 @@ export function PresupuestoBar({ presupuesto: p, onLongPress }: Props) {
 
   return (
     <div
-      className="bg-white rounded-2xl p-4 shadow-[var(--shadow-card)] cursor-default"
+      className="bg-surface rounded-2xl p-4 shadow-[var(--shadow-card)] cursor-default"
       onContextMenu={(e) => { e.preventDefault(); onLongPress?.(); }}
     >
       <div className="flex items-start justify-between mb-3">
         <div>
-          <p className="font-semibold text-ink text-sm">{p.nombre}</p>
-          <p className="text-xs text-[#6B6B6F]">
+          <p className="font-semibold text-fg text-sm">{p.nombre}</p>
+          <p className="text-xs text-fg-muted">
             {formatCurrency(p.importe, p.moneda)} / {PERIODO_LABEL[p.periodo] ?? p.periodo}
           </p>
         </div>
@@ -55,20 +55,20 @@ export function PresupuestoBar({ presupuesto: p, onLongPress }: Props) {
       </div>
 
       {/* Barra de progreso */}
-      <div className="h-2 bg-[#F2F2F4] rounded-full overflow-hidden mb-2">
+      <div className="h-2 bg-surface-2 rounded-full overflow-hidden mb-2">
         <div
           className={clsx("h-full rounded-full transition-all duration-500", barColor)}
           style={{ width: `${pct}%` }}
         />
       </div>
 
-      <div className="flex justify-between text-xs text-[#6B6B6F]">
+      <div className="flex justify-between text-xs text-fg-muted">
         <span>
-          Gastado: <span className="font-medium text-ink">{formatCurrency(consumido, p.moneda)}</span>
+          Gastado: <span className="font-medium text-fg">{formatCurrency(consumido, p.moneda)}</span>
         </span>
         <span>
           {parseFloat(restante) >= 0 ? (
-            <>Restante: <span className="font-medium text-ink">{formatCurrency(restante, p.moneda)}</span></>
+            <>Restante: <span className="font-medium text-fg">{formatCurrency(restante, p.moneda)}</span></>
           ) : (
             <span className="text-red-500 font-medium">
               +{formatCurrency(Math.abs(parseFloat(restante)).toString(), p.moneda)} extra

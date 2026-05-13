@@ -1,0 +1,172 @@
+{
+  "nav": {
+    "dashboard": "Home",
+    "cuentas": "Accounts",
+    "movimientos": "Transactions",
+    "transferencias": "Transfers",
+    "presupuestos": "Budget",
+    "recurrentes": "Recurring",
+    "objetivos": "Goals",
+    "reglas": "Rules",
+    "amigos": "Friends",
+    "grupos": "Groups",
+    "deudas": "Debts",
+    "inversiones": "Investments",
+    "insights": "Insights",
+    "ajustes": "Settings"
+  },
+  "common": {
+    "guardar": "Save",
+    "cancelar": "Cancel",
+    "eliminar": "Delete",
+    "editar": "Edit",
+    "crear": "Create",
+    "aceptar": "Accept",
+    "cerrar": "Close",
+    "cargando": "Loading…",
+    "error": "Error",
+    "exito": "Saved",
+    "proximamente": "Coming soon",
+    "opcional": "optional",
+    "activo": "Active",
+    "inactivo": "Inactive",
+    "activado": "Enabled",
+    "desactivado": "Disabled",
+    "nuevo": "New",
+    "sin_datos": "No data",
+    "hoy": "Today",
+    "ayer": "Yesterday"
+  },
+  "ajustes": {
+    "titulo": "Settings",
+    "cuenta_perfil": "Account & profile",
+    "editar_nombre": "Edit name",
+    "editar_email": "Edit email",
+    "cambiar_contrasena": "Change password",
+    "exportar_datos": "Export my data",
+    "seguridad": "Security & privacy",
+    "bloqueo_pin": "PIN lock",
+    "ocultar_importes": "Hide amounts",
+    "modo_emergencia": "Emergency mode",
+    "preferencias": "Preferences",
+    "tema": "Theme",
+    "idioma": "Language",
+    "moneda_principal": "Main currency",
+    "formato_fecha": "Date format",
+    "primer_dia_mes": "First day of month",
+    "primer_dia_semana": "First day of week",
+    "notificaciones": "Notifications",
+    "recordatorio_diario": "Daily reminder",
+    "alertas_presupuesto": "Budget alerts",
+    "informacion": "Information",
+    "sobre_app": "About Finzen",
+    "politica_privacidad": "Privacy policy",
+    "terminos": "Terms of use",
+    "ayuda": "Help & support",
+    "cerrar_sesion": "Sign out",
+    "cerrar_sesion_confirmar": "Sign out?",
+    "cerrar_sesion_desc": "You'll need to select your profile again when you return.",
+    "tema_claro": "Light",
+    "tema_oscuro": "Dark",
+    "tema_sistema": "System",
+    "lunes": "Monday",
+    "martes": "Tuesday",
+    "miercoles": "Wednesday",
+    "domingo": "Sunday",
+    "sabado": "Saturday"
+  },
+  "dashboard": {
+    "saldo_total": "Total balance",
+    "ingresar": "Income",
+    "gastar": "Expense",
+    "transferir": "Transfer",
+    "anadir": "Add",
+    "ultimos_movimientos": "Recent transactions",
+    "ver_todos": "View all",
+    "presupuestos": "Budgets",
+    "sin_movimientos": "No recent transactions"
+  },
+  "cuentas": {
+    "titulo": "Accounts",
+    "nueva_cuenta": "New account",
+    "sin_cuentas": "No accounts yet",
+    "sin_cuentas_desc": "Add your first account to start tracking your finances.",
+    "archivadas": "Archived"
+  },
+  "movimientos": {
+    "titulo": "Transactions",
+    "nuevo": "New transaction",
+    "ingreso": "Income",
+    "gasto": "Expense",
+    "transferencia": "Transfer",
+    "sin_movimientos": "No transactions",
+    "concepto": "Description",
+    "importe": "Amount",
+    "fecha": "Date",
+    "categoria": "Category",
+    "cuenta": "Account",
+    "notas": "Notes"
+  },
+  "presupuestos": {
+    "titulo": "Budgets",
+    "nuevo": "New budget",
+    "sin_presupuestos": "No budgets",
+    "consumido": "Spent",
+    "restante": "Remaining",
+    "superado": "Over budget"
+  },
+  "recurrentes": {
+    "titulo": "Recurring",
+    "nuevo": "New recurring",
+    "sin_recurrentes": "No recurring payments",
+    "pausar": "Pause",
+    "reanudar": "Resume",
+    "proxima": "Next"
+  },
+  "objetivos": {
+    "titulo": "Goals",
+    "nuevo": "New goal",
+    "sin_objetivos": "No goals",
+    "aportar": "Contribute",
+    "aportado": "Contributed",
+    "objetivo": "Goal",
+    "falta": "Remaining",
+    "fecha_limite": "Deadline"
+  },
+  "deudas": {
+    "titulo": "Debts",
+    "nueva": "New debt",
+    "sin_deudas": "No debts"
+  },
+  "inversiones": {
+    "titulo": "Investments",
+    "sin_inversiones": "No investments"
+  },
+  "reglas": {
+    "titulo": "Rules",
+    "nueva": "New rule",
+    "sin_reglas": "No rules"
+  },
+  "amigos": {
+    "titulo": "Friends",
+    "nuevo": "Add friend",
+    "sin_amigos": "No friends"
+  },
+  "grupos": {
+    "titulo": "Groups",
+    "nuevo": "New group",
+    "sin_grupos": "No groups"
+  },
+  "insights": {
+    "titulo": "Insights"
+  },
+  "meses": {
+    "1": "January", "2": "February", "3": "March", "4": "April",
+    "5": "May", "6": "June", "7": "July", "8": "August",
+    "9": "September", "10": "October", "11": "November", "12": "December"
+  },
+  "dias": {
+    "lun": "Mon", "mar": "Tue", "mie": "Wed", "jue": "Thu",
+    "vie": "Fri", "sab": "Sat", "dom": "Sun"
+  }
+}

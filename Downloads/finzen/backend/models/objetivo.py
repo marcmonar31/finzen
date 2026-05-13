@@ -34,5 +34,6 @@ class ObjetivoAportacion(SQLModel, table=True):
     moneda: str = "EUR"
     fecha: date
     concepto: Optional[str] = None
+    cuenta_id: Optional[str] = Field(default=None, foreign_key="cuentas.id")
     movimiento_id: Optional[str] = Field(default=None, foreign_key="movimientos.id")
     creado_en: datetime = Field(default_factory=datetime.utcnow)

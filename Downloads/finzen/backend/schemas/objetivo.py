@@ -28,6 +28,7 @@ class AportacionCreate(BaseModel):
     importe: Decimal
     moneda: str = "EUR"
     fecha: date
+    cuenta_id: str
     concepto: Optional[str] = None
     movimiento_id: Optional[str] = None
 
@@ -38,6 +39,7 @@ class AportacionOut(BaseModel):
     importe: str
     moneda: str
     fecha: date
+    cuenta_id: Optional[str]
     concepto: Optional[str]
     movimiento_id: Optional[str]
     creado_en: datetime
@@ -50,6 +52,7 @@ class AportacionOut(BaseModel):
             importe=str(a.importe),
             moneda=a.moneda,
             fecha=a.fecha,
+            cuenta_id=getattr(a, "cuenta_id", None),
             concepto=a.concepto,
             movimiento_id=a.movimiento_id,
             creado_en=a.creado_en,

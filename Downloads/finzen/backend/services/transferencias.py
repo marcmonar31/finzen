@@ -33,6 +33,11 @@ def crear_transferencia(
     if cuenta_orig.archivado_en:
         raise HTTPException(400, "La cuenta origen está archivada")
 
+    from services.saldos import saldo_cuenta
+    saldo_orig = saldo_cuenta(cuenta_origen_id, session)
+    if importe_origen > saldo_orig:
+        raise HTTPException(400, f"Saldo insuficiente. Disponible: {saldo_orig:.2f} {cuenta_orig.moneda}")
+
     cuenta_dest = session.get(Cuenta, cuenta_destino_id)
     if not cuenta_dest or cuenta_dest.workspace_id != workspace_id:
         raise HTTPException(400, "Cuenta destino no válida")

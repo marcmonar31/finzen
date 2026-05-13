@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Plus, Play, Pause, Trash2, Zap, ChevronRight } from "lucide-react";
-import { toast } from "sonner";
+import { showFlash } from "@/stores/flash";
 import { clsx } from "clsx";
 import { useReglas, useActualizarRegla, useArchivarRegla, useCrearRegla } from "@/hooks/useReglas";
 import type { ReglaOut } from "@/types/api";
@@ -92,7 +92,7 @@ function NuevaReglaSheet({ open, onClose, plantilla }: NuevaReglaSheetProps) {
 
   async function handleGuardar() {
     if (!nombre.trim()) {
-      toast.error("El nombre es obligatorio");
+      showFlash("El nombre es obligatorio", "error");
       return;
     }
     try {
@@ -106,27 +106,27 @@ function NuevaReglaSheet({ open, onClose, plantilla }: NuevaReglaSheetProps) {
         acciones: plantilla?.acciones ?? [],
         max_ejecuciones_mes: maxEjecMes ? parseInt(maxEjecMes, 10) : undefined,
       });
-      toast.success("Regla creada");
+      showFlash("Regla creada");
       onClose();
     } catch {
-      toast.error("Error al crear la regla");
+      showFlash("Error al crear la regla", "error");
     }
   }
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center">
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-      <div className="relative w-full max-w-lg bg-surface rounded-t-3xl p-6 max-h-[85vh] overflow-y-auto">
+      <div className="relative w-full bg-surface rounded-t-3xl p-6 max-h-[85vh] overflow-y-auto">
         <div className="w-10 h-1 bg-gray-300 rounded-full mx-auto mb-5" />
-        <h2 className="text-lg font-bold text-ink mb-4">
+        <h2 className="text-lg font-bold text-fg mb-4">
           {plantilla ? `Plantilla: ${plantilla.emoji} ${plantilla.nombre}` : "Nueva regla"}
         </h2>
 
         <div className="space-y-4">
           <div>
-            <label className="text-xs font-semibold text-ink/50 uppercase tracking-wide">Nombre</label>
+            <label className="text-xs font-semibold text-fg/50 uppercase tracking-wide">Nombre</label>
             <input
-              className="w-full mt-1 px-3 py-2 rounded-xl border border-gray-200 text-ink bg-white focus:outline-none focus:ring-2 focus:ring-accent"
+              className="w-full mt-1 px-3 py-2 rounded-xl border border-gray-200 text-fg bg-surface focus:outline-none focus:ring-2 focus:ring-accent"
               value={nombre}
               onChange={(e) => setNombre(e.target.value)}
               placeholder="Ej. Redondeo al ahorro"
@@ -134,9 +134,9 @@ function NuevaReglaSheet({ open, onClose, plantilla }: NuevaReglaSheetProps) {
           </div>
 
           <div>
-            <label className="text-xs font-semibold text-ink/50 uppercase tracking-wide">Descripción (opcional)</label>
+            <label className="text-xs font-semibold text-fg/50 uppercase tracking-wide">Descripción (opcional)</label>
             <input
-              className="w-full mt-1 px-3 py-2 rounded-xl border border-gray-200 text-ink bg-white focus:outline-none focus:ring-2 focus:ring-accent"
+              className="w-full mt-1 px-3 py-2 rounded-xl border border-gray-200 text-fg bg-surface focus:outline-none focus:ring-2 focus:ring-accent"
               value={descripcion}
               onChange={(e) => setDescripcion(e.target.value)}
               placeholder="Qué hace esta regla..."
@@ -144,9 +144,9 @@ function NuevaReglaSheet({ open, onClose, plantilla }: NuevaReglaSheetProps) {
           </div>
 
           <div>
-            <label className="text-xs font-semibold text-ink/50 uppercase tracking-wide">Trigger</label>
+            <label className="text-xs font-semibold text-fg/50 uppercase tracking-wide">Trigger</label>
             <select
-              className="w-full mt-1 px-3 py-2 rounded-xl border border-gray-200 text-ink bg-white focus:outline-none"
+              className="w-full mt-1 px-3 py-2 rounded-xl border border-gray-200 text-fg bg-surface focus:outline-none"
               value={triggerTipo}
               onChange={(e) => setTriggerTipo(e.target.value)}
             >
@@ -158,7 +158,7 @@ function NuevaReglaSheet({ open, onClose, plantilla }: NuevaReglaSheetProps) {
           </div>
 
           <div>
-            <label className="text-xs font-semibold text-ink/50 uppercase tracking-wide">Modo condiciones</label>
+            <label className="text-xs font-semibold text-fg/50 uppercase tracking-wide">Modo condiciones</label>
             <div className="flex gap-2 mt-1">
               {(["AND", "OR"] as const).map((m) => (
                 <button
@@ -168,7 +168,7 @@ function NuevaReglaSheet({ open, onClose, plantilla }: NuevaReglaSheetProps) {
                     "flex-1 py-2 rounded-xl text-sm font-semibold transition-colors",
                     modoCondiciones === m
                       ? "bg-ink text-white"
-                      : "bg-gray-100 text-ink/60"
+                      : "bg-gray-100 text-fg/60"
                   )}
                 >
                   {m} — {m === "AND" ? "todas" : "alguna"}
@@ -178,11 +178,12 @@ function NuevaReglaSheet({ open, onClose, plantilla }: NuevaReglaSheetProps) {
           </div>
 
           <div>
-            <label className="text-xs font-semibold text-ink/50 uppercase tracking-wide">Límite ejecuciones/mes</label>
+            <label className="text-xs font-semibold text-fg/50 uppercase tracking-wide">Límite ejecuciones/mes</label>
             <input
               type="number"
               min="1"
-              className="w-full mt-1 px-3 py-2 rounded-xl border border-gray-200 text-ink bg-white focus:outline-none focus:ring-2 focus:ring-accent"
+              inputMode="numeric"
+              className="w-full mt-1 px-3 py-2 rounded-xl border border-gray-200 text-fg bg-surface focus:outline-none focus:ring-2 focus:ring-accent"
               value={maxEjecMes}
               onChange={(e) => setMaxEjecMes(e.target.value)}
               placeholder="Sin límite"
@@ -191,12 +192,12 @@ function NuevaReglaSheet({ open, onClose, plantilla }: NuevaReglaSheetProps) {
 
           {plantilla && plantilla.condiciones.length > 0 && (
             <div>
-              <label className="text-xs font-semibold text-ink/50 uppercase tracking-wide">Condiciones (de la plantilla)</label>
+              <label className="text-xs font-semibold text-fg/50 uppercase tracking-wide">Condiciones (de la plantilla)</label>
               <div className="mt-1 space-y-1">
                 {plantilla.condiciones.map((c, i) => (
-                  <div key={i} className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-xl text-sm text-ink/70">
+                  <div key={i} className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-xl text-sm text-fg/70">
                     <span className="font-mono">{String(c.campo)}</span>
-                    <span className="text-ink/40">{String(c.operador)}</span>
+                    <span className="text-fg/40">{String(c.operador)}</span>
                     <span className="font-medium">{String(c.valor)}</span>
                   </div>
                 ))}
@@ -206,23 +207,23 @@ function NuevaReglaSheet({ open, onClose, plantilla }: NuevaReglaSheetProps) {
 
           {plantilla && plantilla.acciones.length > 0 && (
             <div>
-              <label className="text-xs font-semibold text-ink/50 uppercase tracking-wide">Acciones (de la plantilla)</label>
+              <label className="text-xs font-semibold text-fg/50 uppercase tracking-wide">Acciones (de la plantilla)</label>
               <div className="mt-1 space-y-1">
                 {plantilla.acciones.map((a, i) => (
-                  <div key={i} className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-xl text-sm text-ink/70">
+                  <div key={i} className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-xl text-sm text-fg/70">
                     <Zap size={12} className="text-accent" />
                     <span>{ACCION_LABEL[String(a.tipo)] ?? String(a.tipo)}</span>
                   </div>
                 ))}
               </div>
-              <p className="text-xs text-ink/40 mt-1">Configura los IDs de cuenta/categoría desde el backend o en la próxima versión del builder.</p>
+              <p className="text-xs text-fg/40 mt-1">Configura los IDs de cuenta/categoría desde el backend o en la próxima versión del builder.</p>
             </div>
           )}
         </div>
 
         <div className="flex gap-3 mt-6">
           <button
-            className="flex-1 py-3 rounded-2xl bg-gray-100 text-ink font-semibold"
+            className="flex-1 py-3 rounded-2xl bg-gray-100 text-fg font-semibold"
             onClick={onClose}
           >
             Cancelar
@@ -250,16 +251,16 @@ function ReglaCard({ regla }: { regla: ReglaOut }) {
     try {
       await actualizar.mutateAsync({ id: regla.id, activa: !regla.activa });
     } catch {
-      toast.error("Error al actualizar");
+      showFlash("Error al actualizar", "error");
     }
   }
 
   async function handleArchivar() {
     try {
       await archivar.mutateAsync(regla.id);
-      toast.success("Regla eliminada");
+      showFlash("Regla eliminada", "delete");
     } catch {
-      toast.error("Error al eliminar");
+      showFlash("Error al eliminar", "error");
     }
   }
 
@@ -269,21 +270,21 @@ function ReglaCard({ regla }: { regla: ReglaOut }) {
   return (
     <div
       className={clsx(
-        "bg-white rounded-2xl p-4 shadow-sm border transition-opacity",
+        "bg-surface rounded-2xl p-4 shadow-sm border transition-opacity",
         regla.activa ? "border-transparent opacity-100" : "border-gray-100 opacity-60"
       )}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <Zap size={14} className={clsx(regla.activa ? "text-accent" : "text-ink/30")} />
-            <span className="font-semibold text-ink text-sm truncate">{regla.nombre}</span>
+            <Zap size={14} className={clsx(regla.activa ? "text-accent" : "text-fg/30")} />
+            <span className="font-semibold text-fg text-sm truncate">{regla.nombre}</span>
           </div>
           {regla.descripcion && (
-            <p className="text-xs text-ink/50 mt-0.5 line-clamp-1">{regla.descripcion}</p>
+            <p className="text-xs text-fg/50 mt-0.5 line-clamp-1">{regla.descripcion}</p>
           )}
           <div className="flex items-center gap-2 mt-2 flex-wrap">
-            <span className="text-xs px-2 py-0.5 rounded-full bg-ink/5 text-ink/60">
+            <span className="text-xs px-2 py-0.5 rounded-full bg-ink/5 text-fg/60">
               {TRIGGER_LABEL[regla.trigger_tipo] ?? regla.trigger_tipo}
             </span>
             {condiciones.length > 0 && (
@@ -298,7 +299,7 @@ function ReglaCard({ regla }: { regla: ReglaOut }) {
             )}
           </div>
           {regla.ultima_ejecucion && (
-            <p className="text-xs text-ink/30 mt-1">
+            <p className="text-xs text-fg/30 mt-1">
               Última ejecución: {new Date(regla.ultima_ejecucion).toLocaleDateString("es-ES")}
             </p>
           )}
@@ -312,7 +313,7 @@ function ReglaCard({ regla }: { regla: ReglaOut }) {
             )}
             title={regla.activa ? "Pausar" : "Activar"}
           >
-            {regla.activa ? <Pause size={14} className="text-ink/60" /> : <Play size={14} className="text-green-600" />}
+            {regla.activa ? <Pause size={14} className="text-fg/60" /> : <Play size={14} className="text-green-600" />}
           </button>
           <button
             onClick={handleArchivar}
@@ -339,17 +340,17 @@ function PlantillaCard({
   return (
     <button
       onClick={() => onUsar(plantilla)}
-      className="bg-white rounded-2xl p-4 shadow-sm border border-transparent hover:border-accent/30 text-left w-full transition-all group"
+      className="bg-surface rounded-2xl p-4 shadow-sm border border-transparent hover:border-accent/30 text-left w-full transition-all group"
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <span className="text-2xl">{plantilla.emoji}</span>
           <div>
-            <p className="font-semibold text-ink text-sm">{plantilla.nombre}</p>
-            <p className="text-xs text-ink/50 line-clamp-1">{plantilla.descripcion}</p>
+            <p className="font-semibold text-fg text-sm">{plantilla.nombre}</p>
+            <p className="text-xs text-fg/50 line-clamp-1">{plantilla.descripcion}</p>
           </div>
         </div>
-        <ChevronRight size={16} className="text-ink/20 group-hover:text-accent transition-colors" />
+        <ChevronRight size={16} className="text-fg/20 group-hover:text-accent transition-colors" />
       </div>
     </button>
   );
@@ -383,18 +384,14 @@ export function Reglas() {
   return (
     <div className="min-h-full bg-app pb-24">
       {/* Header */}
-      <div className="bg-ink px-4 pt-10 pb-5 rounded-b-3xl mb-4">
-        <div className="flex items-center justify-between max-w-2xl mx-auto">
-          <div>
-            <h1 className="text-white text-xl font-bold">Reglas</h1>
-            <p className="text-white/50 text-xs mt-0.5">Automatiza tus finanzas</p>
-          </div>
+      <div className="pt-10 px-4 pb-4">
+        <div className="bg-ink rounded-3xl px-5 py-4 flex items-center justify-between shadow-[var(--shadow-floating)]">
+          <h1 className="text-white font-bold text-2xl">Reglas</h1>
           <button
             onClick={handleNuevaVacia}
-            className="flex items-center gap-1.5 bg-white/10 hover:bg-white/20 text-white rounded-2xl px-4 py-2 text-sm font-semibold transition-colors"
+            className="w-9 h-9 rounded-full bg-[#C7FF6B] flex items-center justify-center active:scale-95 transition-transform"
           >
-            <Plus size={16} />
-            Nueva
+            <Plus className="w-4 h-4 text-fg" />
           </button>
         </div>
       </div>
@@ -402,18 +399,18 @@ export function Reglas() {
       <div className="px-4 max-w-2xl mx-auto space-y-6">
         {/* Reglas activas */}
         {isLoading ? (
-          <div className="text-center py-10 text-ink/40 text-sm">Cargando...</div>
+          <div className="text-center py-10 text-fg/40 text-sm">Cargando...</div>
         ) : reglas.length === 0 ? (
           <div className="text-center py-10">
             <span className="text-4xl">⚡</span>
-            <p className="text-ink/50 text-sm mt-2">No hay reglas todavía</p>
-            <p className="text-ink/30 text-xs mt-1">Usa una plantilla o crea la tuya</p>
+            <p className="text-fg/50 text-sm mt-2">No hay reglas todavía</p>
+            <p className="text-fg/30 text-xs mt-1">Usa una plantilla o crea la tuya</p>
           </div>
         ) : (
           <>
             {activas.length > 0 && (
               <section>
-                <h2 className="text-xs font-semibold text-ink/40 uppercase tracking-wide mb-2">Activas</h2>
+                <h2 className="text-xs font-semibold text-fg/40 uppercase tracking-wide mb-2">Activas</h2>
                 <div className="space-y-2">
                   {activas.map((r) => <ReglaCard key={r.id} regla={r} />)}
                 </div>
@@ -421,7 +418,7 @@ export function Reglas() {
             )}
             {pausadas.length > 0 && (
               <section>
-                <h2 className="text-xs font-semibold text-ink/40 uppercase tracking-wide mb-2">Pausadas</h2>
+                <h2 className="text-xs font-semibold text-fg/40 uppercase tracking-wide mb-2">Pausadas</h2>
                 <div className="space-y-2">
                   {pausadas.map((r) => <ReglaCard key={r.id} regla={r} />)}
                 </div>
@@ -432,7 +429,7 @@ export function Reglas() {
 
         {/* Plantillas */}
         <section>
-          <h2 className="text-xs font-semibold text-ink/40 uppercase tracking-wide mb-2">Plantillas</h2>
+          <h2 className="text-xs font-semibold text-fg/40 uppercase tracking-wide mb-2">Plantillas</h2>
           <div className="space-y-2">
             {PLANTILLAS.map((p) => (
               <PlantillaCard key={p.nombre} plantilla={p} onUsar={handleUsarPlantilla} />

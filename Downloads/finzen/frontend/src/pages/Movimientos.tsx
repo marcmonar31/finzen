@@ -1,11 +1,13 @@
 import { useState } from "react";
-import { Plus, Search, X } from "lucide-react";
+import { Plus, Search, X, SlidersHorizontal, ArrowLeft } from "lucide-react";
 import { useMovimientos, useArchivarMovimiento } from "@/hooks/useMovimientos";
 import { MovimientoItem } from "@/components/MovimientoItem";
 import { NuevoMovimientoSheet } from "@/components/NuevoMovimientoSheet";
+import { EditarMovimientoSheet } from "@/components/EditarMovimientoSheet";
+import { FiltroMovimientosSheet, type FiltrosAplicados } from "@/components/FiltroMovimientosSheet";
 import { formatDate } from "@/lib/format";
 import type { Movimiento } from "@/types/api";
-import { toast } from "sonner";
+import { showFlash } from "@/stores/flash";
 
 function agruparPorFecha(movs: Movimiento[]): Map<string, Movimiento[]> {
   const mapa = new Map<string, Movimiento[]>();
@@ -18,13 +20,23 @@ function agruparPorFecha(movs: Movimiento[]): Map<string, Movimiento[]> {
 }
 
 export function Movimientos() {
-  const [busqueda, setBusqueda] = useState("");
-  const [showNuevo, setShowNuevo] = useState(false);
+  const [busqueda,      setBusqueda]      = useState("");
+  const [showNuevo,     setShowNuevo]     = useState(false);
+  const [editando,      setEditando]      = useState<Movimiento | null>(null);
+  const [showFiltros,   setShowFiltros]   = useState(false);
+  const [filtrosActivos, setFiltrosActivos] = useState<FiltrosAplicados>({ limit: 100 });
   const archivar = useArchivarMovimiento();
 
+  const hayFiltros = !!(
+    filtrosActivos.tipo ||
+    filtrosActivos.fecha_desde ||
+    filtrosActivos.fecha_hasta ||
+    filtrosActivos.categoria_id
+  );
+
   const { data: movimientos = [], isLoading } = useMovimientos({
+    ...filtrosActivos,
     busqueda: busqueda || undefined,
-    limit: 100,
   });
 
   const grupos = agruparPorFecha(movimientos);
@@ -32,37 +44,66 @@ export function Movimientos() {
   async function handleArchivar(id: string) {
     try {
       await archivar.mutateAsync(id);
-      toast.success("Movimiento eliminado");
+      showFlash("Movimiento eliminado", "delete");
     } catch {
-      toast.error("Error al eliminar");
+      showFlash("Error al eliminar", "error");
     }
   }
 
   return (
     <div className="min-h-full bg-app pb-24">
-      {/* Header */}
-      <div className="bg-ink px-4 pt-10 pb-5 rounded-b-3xl mb-4">
-        <div className="flex items-center justify-between mb-4">
+      {/* Header — píldora flotante */}
+      <div className="pt-10 px-4 pb-4">
+        <div className="bg-ink rounded-3xl px-5 py-4 flex items-center justify-between shadow-[var(--shadow-floating)]">
           <h1 className="text-white font-bold text-2xl">Movimientos</h1>
-          <button onClick={() => setShowNuevo(true)} className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center">
-            <Plus className="w-4 h-4 text-white" />
-          </button>
-        </div>
-        {/* Buscador */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
-          <input
-            value={busqueda}
-            onChange={(e) => setBusqueda(e.target.value)}
-            placeholder="Buscar movimientos…"
-            className="w-full bg-white/10 text-white placeholder:text-white/40 rounded-2xl pl-9 pr-9 py-2.5 text-sm focus:outline-none"
-          />
-          {busqueda && (
-            <button onClick={() => setBusqueda("")} className="absolute right-3 top-1/2 -translate-y-1/2">
-              <X className="w-4 h-4 text-white/60" />
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowFiltros(true)}
+              className="relative w-9 h-9 rounded-full bg-white/15 flex items-center justify-center active:scale-95 transition-transform"
+            >
+              <SlidersHorizontal className="w-4 h-4 text-white" />
+              {hayFiltros && (
+                <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-[#C7FF6B]" />
+              )}
             </button>
-          )}
+            <button
+              onClick={() => setShowNuevo(true)}
+              className="w-9 h-9 rounded-full bg-[#C7FF6B] flex items-center justify-center active:scale-95 transition-transform"
+            >
+              <Plus className="w-4 h-4 text-fg" />
+            </button>
+          </div>
         </div>
+        {/* Buscador — solo cuando no hay filtros activos */}
+        {!hayFiltros && (
+          <div className="relative mt-3">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-fg-muted" />
+            <input
+              value={busqueda}
+              onChange={(e) => setBusqueda(e.target.value)}
+              placeholder="Buscar movimientos…"
+              className="w-full bg-surface text-fg placeholder:text-[#B0B0B4] rounded-2xl pl-9 pr-9 py-2.5 text-sm focus:outline-none shadow-[var(--shadow-card)]"
+            />
+            {busqueda && (
+              <button onClick={() => setBusqueda("")} className="absolute right-3 top-1/2 -translate-y-1/2">
+                <X className="w-4 h-4 text-fg-muted" />
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Banner de filtros activos */}
+        {hayFiltros && (
+          <button
+            onClick={() => { setFiltrosActivos({ limit: 100 }); setBusqueda(""); }}
+            className="mt-3 w-full flex items-center gap-2 bg-ink/90 text-white rounded-2xl px-4 py-2.5 text-sm font-semibold active:scale-95 transition-transform shadow-[var(--shadow-card)]"
+          >
+            <ArrowLeft className="w-4 h-4 flex-shrink-0" />
+            <span className="truncate">
+              {filtrosActivos._periodoLabel ?? "Filtros activos"} — toca para limpiar
+            </span>
+          </button>
+        )}
       </div>
 
       <div className="px-4 space-y-6">
@@ -83,12 +124,12 @@ export function Movimientos() {
 
         {!isLoading && movimientos.length === 0 && (
           <div className="flex flex-col items-center justify-center py-16 text-center">
-            <div className="w-16 h-16 rounded-2xl bg-white shadow-[var(--shadow-card)] flex items-center justify-center text-3xl mb-4">📋</div>
-            <p className="font-bold text-ink mb-1">Sin movimientos</p>
-            <p className="text-[#6B6B6F] text-sm mb-5">
-              {busqueda ? "No se encontraron resultados" : "Registra tu primer movimiento"}
+            <div className="w-16 h-16 rounded-2xl bg-surface shadow-[var(--shadow-card)] flex items-center justify-center text-3xl mb-4">📋</div>
+            <p className="font-bold text-fg mb-1">Sin movimientos</p>
+            <p className="text-fg-muted text-sm mb-5">
+              {busqueda || hayFiltros ? "No se encontraron resultados" : "Registra tu primer movimiento"}
             </p>
-            {!busqueda && (
+            {!busqueda && !hayFiltros && (
               <button onClick={() => setShowNuevo(true)} className="bg-ink text-white rounded-full px-6 py-2.5 text-sm font-semibold">
                 Añadir movimiento
               </button>
@@ -98,15 +139,16 @@ export function Movimientos() {
 
         {Array.from(grupos.entries()).map(([fecha, movs]) => (
           <div key={fecha}>
-            <p className="text-xs font-semibold text-[#6B6B6F] mb-2 uppercase tracking-wider">
+            <p className="text-xs font-semibold text-fg-muted mb-2 uppercase tracking-wider">
               {formatDate(fecha)}
             </p>
-            <div className="bg-white rounded-2xl px-4 divide-y divide-[#F2F2F4] shadow-[var(--shadow-card)]">
+            <div className="bg-surface rounded-2xl overflow-hidden divide-y divide-border-ui shadow-[var(--shadow-card)]">
               {movs.map((m) => (
                 <MovimientoItem
                   key={m.id}
                   movimiento={m}
-                  onLongPress={() => handleArchivar(m.id)}
+                  onEdit={(mov) => setEditando(mov)}
+                  onDelete={() => handleArchivar(m.id)}
                 />
               ))}
             </div>
@@ -114,16 +156,14 @@ export function Movimientos() {
         ))}
       </div>
 
-      {/* FAB */}
-      <button
-        onClick={() => setShowNuevo(true)}
-        className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-ink text-white rounded-full px-6 py-4 flex items-center gap-2 font-semibold shadow-[var(--shadow-floating)] active:scale-95 transition-transform"
-      >
-        <Plus className="w-5 h-5" />
-        Añadir
-      </button>
-
       <NuevoMovimientoSheet open={showNuevo} onClose={() => setShowNuevo(false)} />
+      <EditarMovimientoSheet movimiento={editando} onClose={() => setEditando(null)} />
+      <FiltroMovimientosSheet
+        open={showFiltros}
+        onClose={() => setShowFiltros(false)}
+        onAplicar={(f) => { setFiltrosActivos(f); setBusqueda(""); }}
+        filtrosActuales={filtrosActivos}
+      />
     </div>
   );
 }

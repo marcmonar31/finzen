@@ -1,214 +1,112 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Plane, Shield, Trash2, X } from "lucide-react";
-import { toast } from "sonner";
+import type { Workspace } from "@/types/api";
+import {
+  User, Lock, Bell, Database, Scale, LifeBuoy, Info,
+  ChevronRight, LogOut, Trash2, Shield, Eye, EyeOff,
+  Download, Upload, ChevronLeft, ChevronRight as ChevRight,
+  Palette, Globe, Calendar, DollarSign, Plus, Delete,
+} from "lucide-react";
+import { showFlash } from "@/stores/flash";
 import { clsx } from "clsx";
 import { api } from "@/lib/api";
-import type { ModoViajeOut } from "@/types/api";
 import { useWorkspaceStore } from "@/stores/workspace";
+import { useUsuarioStore } from "@/stores/usuario";
+import { useActualizarUsuario } from "@/hooks/useUsuario";
+import { usePinStore, hashPin } from "@/stores/pin";
+import { IS_SUPABASE_ENABLED, supabase } from "@/lib/supabase";
+import {
+  EditarNombreSheet,
+  EditarFotoSheet,
+  EditarEmailSheet,
+  CambiarContrasenaSheet,
+} from "@/components/PerfilSheets";
 
-// ── Modo Emergencia ────────────────────────────────────────────────────────────
+// ── Primitivos UI ─────────────────────────────────────────────────────────────
 
-function ModoEmergencia() {
-  const qc = useQueryClient();
-  const { data } = useQuery<{ activo: boolean }>({
-    queryKey: ["modo-emergencia"],
-    queryFn: () => api.get("/modos/emergencia"),
-  });
-  const toggle = useMutation({
-    mutationFn: (activo: boolean) => api.patch("/modos/emergencia", { activo }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["modo-emergencia"] }),
-  });
-
-  const activo = data?.activo ?? false;
-
+function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <div className={clsx(
-      "rounded-2xl p-4 shadow-sm transition-colors",
-      activo ? "bg-red-50 border border-red-200" : "bg-white"
-    )}>
-      <div className="flex justify-between items-start">
-        <div className="flex gap-3 items-center">
-          <div className={clsx("p-2 rounded-xl", activo ? "bg-red-100" : "bg-gray-100")}>
-            <Shield size={20} className={activo ? "text-red-600" : "text-gray-500"} />
-          </div>
-          <div>
-            <p className="font-semibold text-gray-900">Modo Emergencia</p>
-            <p className="text-xs text-gray-500 mt-0.5">
-              {activo ? "Activo — sólo gastos esenciales" : "Desactivado"}
-            </p>
-          </div>
-        </div>
-        <button
-          onClick={() => {
-            toggle.mutateAsync(!activo)
-              .then(() => toast.success(activo ? "Modo emergencia desactivado" : "Modo emergencia activado"))
-              .catch(() => toast.error("Error al cambiar el modo"));
-          }}
-          disabled={toggle.isPending}
-          className={clsx(
-            "relative w-12 h-6 rounded-full transition-colors focus:outline-none",
-            activo ? "bg-red-500" : "bg-gray-200"
-          )}
-        >
-          <span
-            className={clsx(
-              "absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform",
-              activo ? "translate-x-6" : "translate-x-0"
-            )}
-          />
-        </button>
-      </div>
-      {activo && (
-        <p className="mt-3 text-xs text-red-600 bg-red-100 rounded-xl px-3 py-2">
-          El modo emergencia te recuerda evitar gastos no esenciales. No bloquea ninguna funcionalidad.
-        </p>
+    <p className="text-xs font-semibold text-fg-muted uppercase tracking-wider px-1 mb-1.5">
+      {children}
+    </p>
+  );
+}
+
+function Card({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="bg-surface rounded-2xl shadow-[var(--shadow-card)] overflow-hidden">
+      {children}
+    </div>
+  );
+}
+
+function Row({
+  icon, label, value, chevron = true, destructive = false, onClick, rightEl,
+}: {
+  icon?: React.ReactNode;
+  label: string;
+  value?: string;
+  chevron?: boolean;
+  destructive?: boolean;
+  onClick?: () => void;
+  rightEl?: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={clsx(
+        "w-full flex items-center gap-3 px-4 py-3.5 active:bg-surface-2 transition-colors text-left",
+        !onClick && !rightEl && "pointer-events-none"
       )}
-    </div>
-  );
-}
-
-// ── Nuevo Viaje Sheet ─────────────────────────────────────────────────────────
-
-function NuevoViajeSheet({ onClose }: { onClose: () => void }) {
-  const qc = useQueryClient();
-  const [nombre, setNombre] = useState("");
-  const [fechaInicio, setFechaInicio] = useState(new Date().toISOString().split("T")[0]);
-  const [fechaFin, setFechaFin] = useState("");
-
-  const crear = useMutation({
-    mutationFn: (data: { nombre: string; fecha_inicio: string; fecha_fin?: string }) =>
-      api.post<ModoViajeOut>("/modos/viaje", data),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["modos-viaje"] });
-      toast.success("Modo viaje creado");
-      onClose();
-    },
-    onError: () => toast.error("Error al crear el viaje"),
-  });
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center">
-      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-      <div className="relative w-full max-w-lg bg-white rounded-t-3xl p-6">
-        <div className="w-10 h-1 bg-gray-300 rounded-full mx-auto mb-5" />
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-semibold">Nuevo viaje</h2>
-          <button onClick={onClose}><X size={20} className="text-gray-400" /></button>
-        </div>
-
-        <div className="space-y-3">
-          <div>
-            <label className="text-xs text-gray-500 mb-1 block">Nombre del viaje</label>
-            <input
-              className="w-full border rounded-xl px-3 py-2 text-sm"
-              placeholder="Tokyo 2026"
-              value={nombre}
-              onChange={(e) => setNombre(e.target.value)}
-            />
-          </div>
-          <div className="flex gap-2">
-            <div className="flex-1">
-              <label className="text-xs text-gray-500 mb-1 block">Inicio</label>
-              <input
-                type="date"
-                className="w-full border rounded-xl px-3 py-2 text-sm"
-                value={fechaInicio}
-                onChange={(e) => setFechaInicio(e.target.value)}
-              />
-            </div>
-            <div className="flex-1">
-              <label className="text-xs text-gray-500 mb-1 block">Fin (opcional)</label>
-              <input
-                type="date"
-                className="w-full border rounded-xl px-3 py-2 text-sm"
-                value={fechaFin}
-                onChange={(e) => setFechaFin(e.target.value)}
-              />
-            </div>
-          </div>
-        </div>
-
-        <button
-          onClick={() => crear.mutate({ nombre, fecha_inicio: fechaInicio, fecha_fin: fechaFin || undefined })}
-          disabled={!nombre || crear.isPending}
-          className="mt-5 w-full bg-indigo-600 text-white py-3 rounded-2xl font-medium text-sm disabled:opacity-50"
-        >
-          {crear.isPending ? "Guardando..." : "Crear viaje"}
-        </button>
-      </div>
-    </div>
-  );
-}
-
-// ── Modos Viaje ───────────────────────────────────────────────────────────────
-
-function ModosViaje() {
-  const qc = useQueryClient();
-  const { data: viajes = [] } = useQuery<ModoViajeOut[]>({
-    queryKey: ["modos-viaje"],
-    queryFn: () => api.get("/modos/viaje"),
-  });
-  const eliminar = useMutation({
-    mutationFn: (id: string) => api.delete(`/modos/viaje/${id}`),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["modos-viaje"] });
-      toast.success("Viaje eliminado");
-    },
-  });
-  const [showSheet, setShowSheet] = useState(false);
-
-  return (
-    <div>
-      <div className="flex justify-between items-center mb-3">
-        <div className="flex items-center gap-2">
-          <Plane size={18} className="text-indigo-500" />
-          <h2 className="font-semibold text-gray-900">Modos Viaje</h2>
-        </div>
-        <button onClick={() => setShowSheet(true)} className="text-indigo-600 text-sm font-medium flex items-center gap-1">
-          <Plus size={14} /> Nuevo
-        </button>
-      </div>
-
-      {viajes.length === 0 && (
-        <div className="bg-white rounded-2xl p-4 text-center shadow-sm">
-          <p className="text-gray-400 text-sm">Sin viajes registrados</p>
-        </div>
+    >
+      {icon && (
+        <span className={clsx("flex-shrink-0", destructive ? "text-[#FF5C5C]" : "text-fg-muted")}>
+          {icon}
+        </span>
       )}
-
-      <div className="space-y-2">
-        {viajes.map((v) => (
-          <div key={v.id} className="bg-white rounded-2xl p-4 shadow-sm flex justify-between items-center">
-            <div>
-              <p className="font-medium text-gray-900">{v.nombre}</p>
-              <p className="text-xs text-gray-400 mt-0.5">
-                {v.fecha_inicio} {v.fecha_fin ? `→ ${v.fecha_fin}` : "(en curso)"}
-              </p>
-            </div>
-            <button
-              onClick={() => {
-                if (!confirm("¿Eliminar este viaje?")) return;
-                eliminar.mutate(v.id);
-              }}
-              className="text-gray-300 hover:text-red-400"
-            >
-              <Trash2 size={16} />
-            </button>
-          </div>
-        ))}
-      </div>
-
-      {showSheet && <NuevoViajeSheet onClose={() => setShowSheet(false)} />}
-    </div>
+      <span className={clsx("flex-1 text-sm font-medium", destructive ? "text-[#FF5C5C]" : "text-fg")}>
+        {label}
+      </span>
+      {rightEl ?? (
+        <span className="flex items-center gap-1.5 flex-shrink-0">
+          {value && <span className="text-xs text-fg-subtle">{value}</span>}
+          {chevron && onClick && <ChevronRight className="w-4 h-4 text-[#C0C0C4]" />}
+        </span>
+      )}
+    </button>
   );
 }
 
-// ── Cierre Mensual ─────────────────────────────────────────────────────────────
+function Divider() {
+  return <div className="h-px bg-surface-2 ml-4" />;
+}
 
-function CierreResumen() {
+function Toggle({ on, onToggle }: { on: boolean; onToggle: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={(e) => { e.stopPropagation(); onToggle(); }}
+      className={clsx(
+        "relative w-11 h-6 rounded-full transition-colors flex-shrink-0 focus:outline-none",
+        on ? "bg-ink" : "bg-[#D0D0D4] dark:bg-surface-3"
+      )}
+    >
+      <span className={clsx(
+        "absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform",
+        on ? "translate-x-5" : "translate-x-0"
+      )} />
+    </button>
+  );
+}
+
+// ── Cierre Mensual Sheet ──────────────────────────────────────────────────────
+
+function CierreSheet({ onClose }: { onClose: () => void }) {
   const hoy = new Date();
   const [anio, setAnio] = useState(hoy.getFullYear());
-  const [mes, setMes] = useState(hoy.getMonth() + 1);
+  const [mes,  setMes]  = useState(hoy.getMonth() + 1);
+  const MESES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Jul","Agosto","Sep","Octubre","Noviembre","Diciembre"];
 
   const { data, isLoading } = useQuery({
     queryKey: ["cierre", anio, mes],
@@ -216,136 +114,682 @@ function CierreResumen() {
       ingresos: string; gastos: string; balance: string; tasa_ahorro: string;
       num_movimientos: number;
       top_categorias: { nombre: string; total: string; pct: string }[];
-      vs_mes_anterior: { variacion_gastos_pct: string | null; variacion_ingresos_pct: string | null };
+      vs_mes_anterior: { variacion_gastos_pct: string | null };
     }>(`/cierre/${anio}/${mes}`),
   });
 
-  const MESES = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
-
-  function prevMes() {
-    if (mes === 1) { setAnio(a => a - 1); setMes(12); } else setMes(m => m - 1);
-  }
-  function nextMes() {
-    if (mes === 12) { setAnio(a => a + 1); setMes(1); } else setMes(m => m + 1);
-  }
-
+  function prevMes() { if (mes === 1) { setAnio(a => a - 1); setMes(12); } else setMes(m => m - 1); }
+  function nextMes() { if (mes === 12) { setAnio(a => a + 1); setMes(1); } else setMes(m => m + 1); }
+  const isCurrentMonth = anio === hoy.getFullYear() && mes === hoy.getMonth() + 1;
   const balance = data ? parseFloat(data.balance) : 0;
 
   return (
-    <div>
-      <h2 className="font-semibold text-gray-900 mb-3">Cierre mensual</h2>
+    <div className="fixed inset-0 z-50 flex flex-col bg-app">
+      <div className="pt-10 px-4 pb-4 flex items-center gap-3">
+        <button onClick={onClose} className="w-9 h-9 rounded-full bg-surface shadow-[var(--shadow-card)] flex items-center justify-center">
+          <ChevronLeft className="w-5 h-5 text-fg" />
+        </button>
+        <h1 className="font-bold text-xl text-fg">Cierre mensual</h1>
+      </div>
 
-      <div className="bg-white rounded-2xl p-4 shadow-sm">
+      <div className="px-4 space-y-4 overflow-y-auto pb-24">
         {/* Selector mes */}
-        <div className="flex justify-between items-center mb-4">
-          <button onClick={prevMes} className="text-gray-400 hover:text-gray-600 px-2 py-1">‹</button>
-          <p className="font-medium text-gray-900">{MESES[mes - 1]} {anio}</p>
-          <button
-            onClick={nextMes}
-            disabled={anio === hoy.getFullYear() && mes === hoy.getMonth() + 1}
-            className="text-gray-400 hover:text-gray-600 px-2 py-1 disabled:opacity-30"
-          >›</button>
-        </div>
+        <Card>
+          <div className="flex items-center justify-between px-4 py-3.5">
+            <button onClick={prevMes} className="w-8 h-8 rounded-full bg-surface-2 flex items-center justify-center">
+              <ChevronLeft className="w-4 h-4 text-fg" />
+            </button>
+            <p className="font-semibold text-fg">{MESES[mes - 1]} {anio}</p>
+            <button onClick={nextMes} disabled={isCurrentMonth}
+              className="w-8 h-8 rounded-full bg-surface-2 flex items-center justify-center disabled:opacity-30">
+              <ChevRight className="w-4 h-4 text-fg" />
+            </button>
+          </div>
+        </Card>
 
-        {isLoading && <p className="text-center text-gray-400 text-sm py-4">Cargando...</p>}
+        {isLoading && (
+          <div className="space-y-3">
+            {[1,2,3].map(i => <div key={i} className="bg-surface rounded-2xl h-16 animate-pulse shadow-[var(--shadow-card)]" />)}
+          </div>
+        )}
 
         {data && (
-          <div className="space-y-3">
-            <div className="grid grid-cols-3 gap-2 text-center">
-              <div className="bg-emerald-50 rounded-xl p-3">
-                <p className="text-xs text-emerald-600">Ingresos</p>
-                <p className="font-bold text-emerald-700">{parseFloat(data.ingresos).toFixed(0)}€</p>
-              </div>
-              <div className="bg-red-50 rounded-xl p-3">
-                <p className="text-xs text-red-500">Gastos</p>
-                <p className="font-bold text-red-600">{parseFloat(data.gastos).toFixed(0)}€</p>
-              </div>
-              <div className={clsx("rounded-xl p-3", balance >= 0 ? "bg-indigo-50" : "bg-orange-50")}>
-                <p className={clsx("text-xs", balance >= 0 ? "text-indigo-500" : "text-orange-500")}>Balance</p>
-                <p className={clsx("font-bold", balance >= 0 ? "text-indigo-700" : "text-orange-600")}>
-                  {balance >= 0 ? "+" : ""}{balance.toFixed(0)}€
-                </p>
-              </div>
+          <>
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                { label: "Ingresos", val: data.ingresos, color: "text-[#5BAA1F]", bg: "bg-[#F0FAE8]" },
+                { label: "Gastos",   val: data.gastos,   color: "text-[#FF5C5C]", bg: "bg-[#FFF0F0]" },
+                { label: "Balance",  val: data.balance,  color: balance >= 0 ? "text-fg" : "text-[#FF5C5C]", bg: "bg-surface" },
+              ].map(({ label, val, color, bg }) => (
+                <div key={label} className={clsx("rounded-2xl p-3 shadow-[var(--shadow-card)] text-center", bg)}>
+                  <p className="text-[10px] text-fg-muted mb-1">{label}</p>
+                  <p className={clsx("font-bold text-sm tabular-nums", color)}>
+                    {balance >= 0 && label === "Balance" ? "+" : ""}{parseFloat(val).toFixed(0)}€
+                  </p>
+                </div>
+              ))}
             </div>
 
-            <div className="flex justify-between items-center text-sm text-gray-500">
-              <span>Tasa de ahorro</span>
-              <span className={clsx("font-semibold", parseFloat(data.tasa_ahorro) >= 20 ? "text-emerald-600" : "text-gray-700")}>
-                {data.tasa_ahorro}%
-              </span>
-            </div>
+            <Card>
+              <div className="px-4 py-3.5 flex justify-between items-center">
+                <span className="text-sm text-fg-muted">Tasa de ahorro</span>
+                <span className={clsx("font-bold text-sm", parseFloat(data.tasa_ahorro) >= 20 ? "text-[#5BAA1F]" : "text-fg")}>
+                  {data.tasa_ahorro}%
+                </span>
+              </div>
+              <Divider />
+              <div className="px-4 py-3.5 flex justify-between items-center">
+                <span className="text-sm text-fg-muted">Movimientos</span>
+                <span className="font-bold text-sm text-fg">{data.num_movimientos}</span>
+              </div>
+              {data.vs_mes_anterior.variacion_gastos_pct && (
+                <>
+                  <Divider />
+                  <div className="px-4 py-3.5 flex justify-between items-center">
+                    <span className="text-sm text-fg-muted">Gastos vs mes anterior</span>
+                    <span className={clsx("font-bold text-sm", parseFloat(data.vs_mes_anterior.variacion_gastos_pct) <= 0 ? "text-[#5BAA1F]" : "text-[#FF5C5C]")}>
+                      {parseFloat(data.vs_mes_anterior.variacion_gastos_pct) > 0 ? "+" : ""}{data.vs_mes_anterior.variacion_gastos_pct}%
+                    </span>
+                  </div>
+                </>
+              )}
+            </Card>
 
             {data.top_categorias.length > 0 && (
-              <div>
-                <p className="text-xs text-gray-400 mb-2">Top gastos por categoría</p>
-                <div className="space-y-1.5">
-                  {data.top_categorias.map((c) => (
-                    <div key={c.nombre} className="flex justify-between items-center">
-                      <div className="flex items-center gap-2 flex-1">
-                        <span className="text-xs text-gray-600">{c.nombre}</span>
-                        <div className="flex-1 bg-gray-100 rounded-full h-1.5">
-                          <div
-                            className="bg-indigo-400 h-1.5 rounded-full"
-                            style={{ width: `${Math.min(parseFloat(c.pct), 100)}%` }}
-                          />
+              <Card>
+                <div className="px-4 pt-3.5 pb-1">
+                  <p className="text-xs font-semibold text-fg-muted uppercase tracking-wider mb-3">Top categorías</p>
+                  <div className="space-y-3 pb-3">
+                    {data.top_categorias.map((c) => (
+                      <div key={c.nombre}>
+                        <div className="flex justify-between text-sm mb-1">
+                          <span className="text-fg">{c.nombre}</span>
+                          <span className="font-medium text-fg tabular-nums">{parseFloat(c.total).toFixed(0)}€</span>
+                        </div>
+                        <div className="h-1.5 bg-surface-2 rounded-full overflow-hidden">
+                          <div className="h-full bg-ink rounded-full" style={{ width: `${Math.min(parseFloat(c.pct), 100)}%` }} />
                         </div>
                       </div>
-                      <span className="text-xs font-medium text-gray-700 ml-2">{parseFloat(c.total).toFixed(0)}€</span>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
+              </Card>
             )}
-
-            {data.vs_mes_anterior.variacion_gastos_pct && (
-              <p className="text-xs text-gray-400">
-                Gastos vs mes anterior:{" "}
-                <span className={clsx(
-                  "font-medium",
-                  parseFloat(data.vs_mes_anterior.variacion_gastos_pct) <= 0 ? "text-emerald-600" : "text-red-500"
-                )}>
-                  {parseFloat(data.vs_mes_anterior.variacion_gastos_pct) > 0 ? "+" : ""}
-                  {data.vs_mes_anterior.variacion_gastos_pct}%
-                </span>
-              </p>
-            )}
-          </div>
+          </>
         )}
       </div>
     </div>
   );
 }
 
-// ── Workspace Info ─────────────────────────────────────────────────────────────
+// ── Modo Emergencia toggle ────────────────────────────────────────────────────
 
-function WorkspaceInfo() {
+function ModoEmergenciaRow() {
+  const qc        = useQueryClient();
   const workspace = useWorkspaceStore((s) => s.workspace);
-  if (!workspace) return null;
+  const { data }  = useQuery<{ activo: boolean }>({
+    queryKey:           ["modo-emergencia"],
+    queryFn:            () => api.get("/modos/emergencia"),
+    enabled:            !!workspace,
+    staleTime:          0,          // siempre refetch al montar
+    refetchOnWindowFocus: true,     // refetch al volver al tab
+    refetchInterval:    30_000,     // polling cada 30s para sync entre dispositivos
+  });
+  const toggle = useMutation({
+    mutationFn: (activo: boolean) => api.patch("/modos/emergencia", { activo }),
+    onSuccess:  () => qc.invalidateQueries({ queryKey: ["modo-emergencia"] }),
+    onError:    () => showFlash("No se pudo cambiar el modo emergencia", "error" as Parameters<typeof showFlash>[1]),
+  });
+  const activo = data?.activo ?? false;
+
   return (
-    <div className="bg-white rounded-2xl p-4 shadow-sm">
-      <p className="font-semibold text-gray-900">
-        {workspace.emoji} {workspace.nombre}
-      </p>
-      <p className="text-xs text-gray-400 mt-1">Moneda base: {workspace.moneda_base}</p>
+    <Row
+      icon={<Shield className="w-4 h-4" />}
+      label="Modo emergencia"
+      value={activo ? "Activo" : "Desactivado"}
+      chevron={false}
+      rightEl={
+        <Toggle
+          on={activo}
+          onToggle={() => toggle.mutate(!activo)}
+        />
+      }
+    />
+  );
+}
+
+// ── PIN setup sheet ───────────────────────────────────────────────────────────
+
+const NUMPAD_ROWS = [["1","2","3"],["4","5","6"],["7","8","9"],["del","0","ok"]] as const;
+
+function PinNumpad({ digits, onDigit }: { digits: string[]; onDigit: (k: string) => void }) {
+  return (
+    <div className="space-y-2 w-full max-w-xs mx-auto mt-4">
+      {NUMPAD_ROWS.map((row, ri) => (
+        <div key={ri} className="flex justify-between">
+          {row.map((key) => {
+            if (key === "del") return (
+              <button key="del" onClick={() => onDigit("del")} disabled={digits.length === 0}
+                className="w-[30%] h-14 rounded-2xl bg-surface-2 flex items-center justify-center active:scale-95 transition-transform disabled:opacity-30">
+                <Delete className="w-5 h-5 text-fg" />
+              </button>
+            );
+            if (key === "ok") return <div key="ok" className="w-[30%] h-14" />;
+            return (
+              <button key={key} onClick={() => onDigit(key)} disabled={digits.length >= 4}
+                className="w-[30%] h-14 rounded-2xl bg-surface-2 text-xl font-semibold text-fg active:scale-95 transition-transform disabled:opacity-30">
+                {key}
+              </button>
+            );
+          })}
+        </div>
+      ))}
     </div>
   );
 }
 
-// ── Page ──────────────────────────────────────────────────────────────────────
+function PinDots({ n }: { n: number }) {
+  return (
+    <div className="flex gap-4 justify-center my-6">
+      {[0,1,2,3].map(i => (
+        <div key={i} className={`w-4 h-4 rounded-full border-2 transition-all duration-150 ${
+          i < n ? "bg-ink border-ink scale-110" : "border-[#C0C0C4]"
+        }`} />
+      ))}
+    </div>
+  );
+}
+
+function PinSetupSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const { pinHash, setPinHash, removePin } = usePinStore();
+  // step: "menu" | "create" | "confirm" | "remove"
+  const [step,    setStep]    = useState<"menu" | "create" | "confirm" | "remove">("menu");
+  const [digits,  setDigits]  = useState<string[]>([]);
+  const [first,   setFirst]   = useState("");
+  const [shake,   setShake]   = useState(false);
+
+  function reset() { setDigits([]); setFirst(""); setStep(pinHash ? "menu" : "create"); }
+
+  useEffect(() => { if (open) reset(); }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function handleDigit(key: string) {
+    if (key === "del") { setDigits(d => d.slice(0, -1)); return; }
+    const next = [...digits, key];
+    setDigits(next);
+    if (next.length < 4) return;
+
+    if (step === "create") {
+      setFirst(next.join(""));
+      setDigits([]);
+      setStep("confirm");
+      return;
+    }
+    if (step === "confirm") {
+      if (next.join("") === first) {
+        const h = await hashPin(next.join(""));
+        setPinHash(h);
+        showFlash("PIN configurado");
+        onClose();
+      } else {
+        setShake(true);
+        setTimeout(() => { setShake(false); setDigits([]); }, 500);
+      }
+      return;
+    }
+    if (step === "remove") {
+      const h = await hashPin(next.join(""));
+      if (h === pinHash) {
+        removePin();
+        showFlash("PIN eliminado");
+        onClose();
+      } else {
+        setShake(true);
+        setTimeout(() => { setShake(false); setDigits([]); }, 500);
+      }
+    }
+  }
+
+  return (
+    <>
+      {open && (
+        <div className="fixed inset-0 z-[800] bg-black/40 flex flex-col" onClick={onClose}>
+          <div className="flex-1" />
+          <div
+            className="bg-surface rounded-t-3xl px-5 pt-5 pb-10 max-h-[90vh] overflow-y-auto"
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Handle */}
+            <div className="w-10 h-1 bg-border-ui rounded-full mx-auto mb-4" />
+
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-bold text-lg text-fg">
+                {step === "confirm" ? "Confirma el PIN" : step === "remove" ? "Eliminar PIN" : "Bloqueo con PIN"}
+              </h2>
+              <button onClick={onClose} className="w-8 h-8 rounded-full bg-surface-2 flex items-center justify-center">
+                <Lock className="w-3.5 h-3.5 text-fg" />
+              </button>
+            </div>
+
+            {step === "menu" && (
+              <div className="space-y-2">
+                <button onClick={() => { setDigits([]); setStep("create"); }}
+                  className="w-full flex items-center gap-3 bg-surface-2 rounded-2xl px-4 py-3.5 text-sm font-medium text-fg active:bg-surface-3">
+                  <Lock className="w-4 h-4" />
+                  Cambiar PIN
+                </button>
+                <button onClick={() => { setDigits([]); setStep("remove"); }}
+                  className="w-full flex items-center gap-3 bg-[#FFF0F0] rounded-2xl px-4 py-3.5 text-sm font-medium text-[#FF5C5C] active:bg-[#FFE0E0]">
+                  <Trash2 className="w-4 h-4" />
+                  Eliminar PIN
+                </button>
+              </div>
+            )}
+
+            {(step === "create" || step === "confirm" || step === "remove") && (
+              <>
+                <p className="text-center text-fg-muted text-sm mt-1">
+                  {step === "create"  && "Introduce un PIN de 4 dígitos"}
+                  {step === "confirm" && "Repite el mismo PIN para confirmar"}
+                  {step === "remove"  && "Introduce tu PIN actual para eliminarlo"}
+                </p>
+                <div className={shake ? "animate-[shake_0.5s_ease-in-out]" : ""}>
+                  <PinDots n={digits.length} />
+                </div>
+                <PinNumpad digits={digits} onDigit={handleDigit} />
+              </>
+            )}
+          </div>
+        </div>
+      )}
+      <style>{`@keyframes shake { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-8px)} 40%{transform:translateX(8px)} 60%{transform:translateX(-5px)} 80%{transform:translateX(5px)} }`}</style>
+    </>
+  );
+}
+
+// ── Picker genérico ───────────────────────────────────────────────────────────
+
+function PickerSheet({ open, onClose, titulo, opciones, valor, onSelect }: {
+  open: boolean; onClose: () => void; titulo: string;
+  opciones: { value: string; label: string; desc?: string }[];
+  valor: string; onSelect: (v: string) => void;
+}) {
+  return (
+    <>
+      {open && (
+        <div className="fixed inset-0 z-[820] bg-black/40 flex flex-col" onClick={onClose}>
+          <div className="flex-1" />
+          <div className="bg-[var(--color-surface)] rounded-t-3xl px-5 pt-3 pb-10 max-h-[75vh] flex flex-col" onClick={e => e.stopPropagation()}>
+            <div className="w-10 h-1 bg-border-ui rounded-full mx-auto mb-4 flex-shrink-0" />
+            <h3 className="font-bold text-base text-[var(--color-fg)] mb-3 flex-shrink-0">{titulo}</h3>
+            <div className="space-y-1 overflow-y-auto">
+              {opciones.map(op => (
+                <button key={op.value} onClick={() => { onSelect(op.value); onClose(); }}
+                  className="w-full flex items-center justify-between px-4 py-3.5 rounded-2xl active:bg-[var(--color-surface-2)] transition-colors">
+                  <div className="text-left">
+                    <p className={`text-sm font-medium ${valor === op.value ? "text-[#5BAA1F]" : "text-[var(--color-fg)]"}`}>{op.label}</p>
+                    {op.desc && <p className="text-xs text-[var(--color-fg-muted)]">{op.desc}</p>}
+                  </div>
+                  {valor === op.value && <span className="text-[#5BAA1F] text-lg">✓</span>}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
+// ── Cerrar sesión ─────────────────────────────────────────────────────────────
+
+function useCerrarSesion() {
+  const setUsuario   = useUsuarioStore((s) => s.setUsuario);
+  const setWorkspace = useWorkspaceStore((s) => s.setWorkspace);
+
+  return async function cerrarSesion() {
+    if (IS_SUPABASE_ENABLED && supabase) {
+      await supabase.auth.signOut();
+    }
+    setUsuario(null);
+    setWorkspace(null);
+  };
+}
+
+// ── Ajustes ───────────────────────────────────────────────────────────────────
+
+// ── Opciones de preferencias ──────────────────────────────────────────────────
+
+
+const IDIOMAS = [
+  { value: "es", label: "Español" },
+  { value: "en", label: "English" },
+  { value: "uk", label: "Українська" },
+];
+
+const MONEDAS = [
+  { value: "EUR", label: "Euro",                  desc: "€" },
+  { value: "USD", label: "Dólar estadounidense",  desc: "$" },
+  { value: "GBP", label: "Libra esterlina",       desc: "£" },
+  { value: "CHF", label: "Franco suizo",          desc: "Fr" },
+  { value: "JPY", label: "Yen japonés",           desc: "¥" },
+  { value: "CAD", label: "Dólar canadiense",      desc: "CA$" },
+  { value: "MXN", label: "Peso mexicano",         desc: "MX$" },
+];
+
+const FORMATOS_FECHA = [
+  { value: "DD/MM/YYYY", label: "DD/MM/AAAA", desc: "31/12/2024" },
+  { value: "MM/DD/YYYY", label: "MM/DD/AAAA", desc: "12/31/2024" },
+  { value: "YYYY-MM-DD", label: "AAAA-MM-DD", desc: "2024-12-31" },
+  { value: "D MMM YYYY", label: "D MMM AAAA", desc: "31 dic 2024" },
+];
+
+const DIAS_MES = Array.from({ length: 28 }, (_, i) => ({
+  value: String(i + 1),
+  label: `Día ${i + 1}`,
+}));
+
+const DIAS_SEMANA = [
+  { value: "lunes",   label: "Lunes" },
+  { value: "domingo", label: "Domingo" },
+  { value: "sabado",  label: "Sábado" },
+];
 
 export default function Ajustes() {
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-lg mx-auto px-4 pt-6 pb-28">
-        <h1 className="text-2xl font-bold text-gray-900 mb-6">Ajustes</h1>
+  const qc          = useQueryClient();
+  const workspace   = useWorkspaceStore((s) => s.workspace);
+  const setWorkspace = useWorkspaceStore((s) => s.setWorkspace);
+  const usuario     = useUsuarioStore((s) => s.usuario);
+  const discreto    = usuario?.ocultar_importes ?? false;
+  const actualizarUsuario = useActualizarUsuario();
+  const { pinHash } = usePinStore();
+  const cerrarSesion = useCerrarSesion();
 
-        <div className="space-y-6">
-          <WorkspaceInfo />
-          <ModoEmergencia />
-          <ModosViaje />
-          <CierreResumen />
+  const actualizarWorkspace = useMutation({
+    mutationFn: (body: { moneda_base: string }) =>
+      api.patch<Workspace>(`/workspaces/${workspace?.id}`, body),
+    onSuccess: (updated) => {
+      setWorkspace(updated);
+      qc.invalidateQueries({ queryKey: ["workspaces"] });
+    },
+    onError: () => showFlash("No se pudo cambiar la moneda", "error" as Parameters<typeof showFlash>[1]),
+  });
+
+  const [showCierre,     setShowCierre]     = useState(false);
+  const [showConfirm,    setShowConfirm]    = useState(false);
+  const [showNombre,     setShowNombre]     = useState(false);
+  const [showFoto,       setShowFoto]       = useState(false);
+  const [showEmail,      setShowEmail]      = useState(false);
+  const [showPassword,   setShowPassword]   = useState(false);
+  const [showPin,        setShowPin]        = useState(false);
+  const [showIdioma,     setShowIdioma]     = useState(false);
+  const [showMoneda,     setShowMoneda]     = useState(false);
+  const [showFormato,    setShowFormato]    = useState(false);
+  const [showDiaMes,     setShowDiaMes]     = useState(false);
+  const [showDiaSemana,  setShowDiaSemana]  = useState(false);
+
+  const isDark = usuario?.tema === "oscuro";
+  const idiomaLabel   = IDIOMAS.find(i => i.value === (usuario?.idioma ?? "es"))?.label ?? "Español";
+  const formatoLabel  = FORMATOS_FECHA.find(f => f.value === (usuario?.formato_fecha ?? "DD/MM/YYYY"))?.label ?? "DD/MM/AAAA";
+  const diaMesLabel   = `Día ${usuario?.primer_dia_mes ?? 1}`;
+  const diaSemLabel   = DIAS_SEMANA.find(d => d.value === (usuario?.primer_dia_semana ?? "lunes"))?.label ?? "Lunes";
+
+  const prox = () => showFlash("Próximamente disponible", "info" as Parameters<typeof showFlash>[1]);
+
+  if (showCierre) return <CierreSheet onClose={() => setShowCierre(false)} />;
+
+  return (
+    <div className="min-h-full bg-app pb-24">
+      {/* Header */}
+      <div className="pt-10 px-4 pb-4">
+        <div className="bg-ink rounded-3xl px-5 py-4 shadow-[var(--shadow-floating)]">
+          <h1 className="text-white font-bold text-2xl">Ajustes</h1>
         </div>
       </div>
+
+      <div className="px-4 space-y-6">
+
+        {/* ── Cuenta y perfil ── */}
+        <div>
+          <SectionLabel>Cuenta y perfil</SectionLabel>
+          <Card>
+            {/* Avatar + info */}
+            <button
+              onClick={() => setShowFoto(true)}
+              className="w-full flex items-center gap-3 px-4 py-4 active:bg-surface-2 transition-colors"
+            >
+              <div
+                className="w-14 h-14 rounded-full flex items-center justify-center text-2xl flex-shrink-0 overflow-hidden"
+                style={{ backgroundColor: usuario?.foto_data ? undefined : (usuario?.avatar_color ?? "#1A1A2E") }}
+              >
+                {usuario?.foto_data
+                  ? <img src={usuario.foto_data} alt="avatar" className="w-full h-full object-cover" />
+                  : <span>{usuario?.avatar_emoji ?? "👤"}</span>
+                }
+              </div>
+              <div className="flex-1 min-w-0 text-left">
+                <p className="font-bold text-fg text-base truncate">{usuario?.nombre ?? "Usuario"}</p>
+                {usuario?.email && (
+                  <p className="text-xs text-fg-muted truncate">{usuario.email}</p>
+                )}
+              </div>
+              <ChevronRight className="w-4 h-4 text-[#C0C0C4] flex-shrink-0" />
+            </button>
+            <Divider />
+            <Row icon={<User className="w-4 h-4" />}     label="Editar nombre"      onClick={() => setShowNombre(true)} />
+            <Divider />
+            <Row icon={<Globe className="w-4 h-4" />}    label="Editar email"       onClick={() => setShowEmail(true)} />
+            <Divider />
+            <Row icon={<Lock className="w-4 h-4" />}     label="Cambiar contraseña" onClick={() => setShowPassword(true)} />
+            <Divider />
+            <Row icon={<Download className="w-4 h-4" />} label="Exportar mis datos" onClick={prox} />
+          </Card>
+        </div>
+
+        {/* ── Seguridad y privacidad ── */}
+        <div>
+          <SectionLabel>Seguridad y privacidad</SectionLabel>
+          <Card>
+            <Row
+              icon={<Lock className="w-4 h-4" />}
+              label="Bloqueo con PIN"
+              value={pinHash ? "Activado" : "Desactivado"}
+              onClick={() => setShowPin(true)}
+            />
+            <Divider />
+            <Row
+              icon={discreto ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              label="Ocultar importes"
+              value={discreto ? "Activado" : "Desactivado"}
+              chevron={false}
+              rightEl={
+                <Toggle
+                  on={discreto}
+                  onToggle={() => actualizarUsuario.mutate({ ocultar_importes: !discreto })}
+                />
+              }
+            />
+            <Divider />
+            <ModoEmergenciaRow />
+          </Card>
+        </div>
+
+        {/* ── Preferencias ── */}
+        <div>
+          <SectionLabel>Preferencias</SectionLabel>
+          <Card>
+            <Row
+              icon={<Palette className="w-4 h-4" />}
+              label="Tema oscuro"
+              value={isDark ? "Activado" : "Desactivado"}
+              chevron={false}
+              rightEl={
+                <Toggle
+                  on={isDark}
+                  onToggle={() => actualizarUsuario.mutate({ tema: isDark ? "claro" : "oscuro" })}
+                />
+              }
+            />
+            <Divider />
+            <Row icon={<Globe className="w-4 h-4" />}      label="Idioma"                 value={idiomaLabel}                        onClick={() => setShowIdioma(true)} />
+            <Divider />
+            <Row icon={<DollarSign className="w-4 h-4" />} label="Moneda principal"        value={workspace?.moneda_base ?? "EUR"}    onClick={() => setShowMoneda(true)} />
+            <Divider />
+            <Row icon={<Calendar className="w-4 h-4" />}   label="Formato de fecha"        value={formatoLabel}                       onClick={() => setShowFormato(true)} />
+            <Divider />
+            <Row icon={<Calendar className="w-4 h-4" />}   label="Primer día del mes"      value={diaMesLabel}                        onClick={() => setShowDiaMes(true)} />
+            <Divider />
+            <Row icon={<Calendar className="w-4 h-4" />}   label="Primer día de la semana" value={diaSemLabel}                        onClick={() => setShowDiaSemana(true)} />
+          </Card>
+        </div>
+
+        {/* ── Notificaciones ── */}
+        <div>
+          <SectionLabel>Notificaciones</SectionLabel>
+          <Card>
+            <Row icon={<Bell className="w-4 h-4" />} label="Recordatorio diario"    onClick={prox} />
+            <Divider />
+            <Row icon={<Bell className="w-4 h-4" />} label="Pagos recurrentes"      onClick={prox} />
+            <Divider />
+            <Row icon={<Bell className="w-4 h-4" />} label="Resumen semanal"        onClick={prox} />
+            <Divider />
+            <Row icon={<Bell className="w-4 h-4" />} label="Resumen mensual"        onClick={prox} />
+            <Divider />
+            <Row icon={<Bell className="w-4 h-4" />} label="Novedades de la app"    onClick={prox} />
+          </Card>
+        </div>
+
+        {/* ── Datos ── */}
+        <div>
+          <SectionLabel>Datos</SectionLabel>
+          <Card>
+            <Row icon={<Database className="w-4 h-4" />} label="Cierre mensual"      onClick={() => setShowCierre(true)} />
+            <Divider />
+            <Row icon={<Download className="w-4 h-4" />} label="Exportar"            onClick={prox} />
+            <Divider />
+            <Row icon={<Upload className="w-4 h-4" />}   label="Importar CSV"        onClick={prox} />
+            <Divider />
+            <Row icon={<Database className="w-4 h-4" />} label="Copia de seguridad"  onClick={prox} />
+            <Divider />
+            <Row icon={<Trash2 className="w-4 h-4" />}   label="Borrar todos los datos" destructive onClick={prox} />
+          </Card>
+        </div>
+
+        {/* ── Legal ── */}
+        <div>
+          <SectionLabel>Legal</SectionLabel>
+          <Card>
+            <Row icon={<Scale className="w-4 h-4" />} label="Términos y condiciones" onClick={prox} />
+            <Divider />
+            <Row icon={<Scale className="w-4 h-4" />} label="Política de privacidad" onClick={prox} />
+            <Divider />
+            <Row icon={<Scale className="w-4 h-4" />} label="Gestionar consentimientos" onClick={prox} />
+            <Divider />
+            <Row icon={<Info className="w-4 h-4" />}  label="Licencias open source"  onClick={prox} />
+          </Card>
+        </div>
+
+        {/* ── Soporte ── */}
+        <div>
+          <SectionLabel>Soporte</SectionLabel>
+          <Card>
+            <Row icon={<LifeBuoy className="w-4 h-4" />} label="Centro de ayuda"   onClick={prox} />
+            <Divider />
+            <Row icon={<LifeBuoy className="w-4 h-4" />} label="Contactar"         onClick={prox} />
+            <Divider />
+            <Row icon={<LifeBuoy className="w-4 h-4" />} label="Reportar un bug"   onClick={prox} />
+            <Divider />
+            <Row icon={<Plus className="w-4 h-4 rotate-45" />} label="Valorar la app" onClick={prox} />
+          </Card>
+        </div>
+
+        {/* ── Sobre ── */}
+        <div>
+          <SectionLabel>Sobre Finzen</SectionLabel>
+          <Card>
+            <Row label="Versión" value="1.0.0 (build 1)" chevron={false} />
+            <Divider />
+            <Row label="Novedades" onClick={prox} />
+          </Card>
+        </div>
+
+        {/* ── Cerrar sesión ── */}
+        <Card>
+          <Row
+            icon={<LogOut className="w-4 h-4" />}
+            label="Cerrar sesión"
+            destructive
+            onClick={() => setShowConfirm(true)}
+          />
+        </Card>
+
+        {/* ── Eliminar cuenta ── */}
+        <Card>
+          <Row
+            icon={<Trash2 className="w-4 h-4" />}
+            label="Eliminar cuenta"
+            destructive
+            onClick={prox}
+          />
+        </Card>
+
+      </div>
+
+      {/* Perfil sheets */}
+      {usuario && (
+        <>
+          <EditarNombreSheet   open={showNombre}   onClose={() => setShowNombre(false)}   usuario={usuario} />
+          <EditarFotoSheet     open={showFoto}     onClose={() => setShowFoto(false)}     usuario={usuario} />
+          <EditarEmailSheet    open={showEmail}    onClose={() => setShowEmail(false)}    usuario={usuario} />
+          <CambiarContrasenaSheet open={showPassword} onClose={() => setShowPassword(false)} />
+        </>
+      )}
+
+      <PinSetupSheet open={showPin} onClose={() => setShowPin(false)} />
+
+      <PickerSheet
+        open={showIdioma} onClose={() => setShowIdioma(false)}
+        titulo="Idioma" opciones={IDIOMAS} valor={usuario?.idioma ?? "es"}
+        onSelect={(v) => actualizarUsuario.mutate({ idioma: v as "es" | "en" | "uk" })}
+      />
+      <PickerSheet
+        open={showMoneda} onClose={() => setShowMoneda(false)}
+        titulo="Moneda principal" opciones={MONEDAS} valor={workspace?.moneda_base ?? "EUR"}
+        onSelect={(v) => actualizarWorkspace.mutate({ moneda_base: v })}
+      />
+      <PickerSheet
+        open={showFormato} onClose={() => setShowFormato(false)}
+        titulo="Formato de fecha" opciones={FORMATOS_FECHA} valor={usuario?.formato_fecha ?? "DD/MM/YYYY"}
+        onSelect={(v) => actualizarUsuario.mutate({ formato_fecha: v })}
+      />
+      <PickerSheet
+        open={showDiaMes} onClose={() => setShowDiaMes(false)}
+        titulo="Primer día del mes" opciones={DIAS_MES} valor={String(usuario?.primer_dia_mes ?? 1)}
+        onSelect={(v) => actualizarUsuario.mutate({ primer_dia_mes: Number(v) })}
+      />
+      <PickerSheet
+        open={showDiaSemana} onClose={() => setShowDiaSemana(false)}
+        titulo="Primer día de la semana" opciones={DIAS_SEMANA} valor={usuario?.primer_dia_semana ?? "lunes"}
+        onSelect={(v) => actualizarUsuario.mutate({ primer_dia_semana: v })}
+      />
+
+      {/* Confirm logout sheet */}
+      {showConfirm && (
+        <div className="fixed inset-0 z-50 flex items-end" style={{ background: "rgba(0,0,0,0.45)" }} onClick={() => setShowConfirm(false)}>
+          <div className="w-full bg-surface rounded-t-3xl p-6" onClick={(e) => e.stopPropagation()}>
+            <div className="w-10 h-1 bg-border-ui rounded-full mx-auto mb-5" />
+            <p className="font-bold text-fg text-base text-center mb-1">¿Cerrar sesión?</p>
+            <p className="text-fg-muted text-sm text-center mb-6">Tendrás que seleccionar tu perfil de nuevo al volver.</p>
+            <div className="flex gap-3">
+              <button onClick={() => setShowConfirm(false)} className="flex-1 py-3.5 rounded-2xl bg-surface-2 text-fg font-semibold text-sm active:scale-95 transition-transform">
+                Cancelar
+              </button>
+              <button onClick={cerrarSesion} className="flex-1 py-3.5 rounded-2xl bg-[#FF5C5C] text-white font-semibold text-sm active:scale-95 transition-transform">
+                Cerrar sesión
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

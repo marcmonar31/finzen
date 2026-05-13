@@ -1,0 +1,172 @@
+{
+  "nav": {
+    "dashboard": "Головна",
+    "cuentas": "Рахунки",
+    "movimientos": "Транзакції",
+    "transferencias": "Перекази",
+    "presupuestos": "Бюджети",
+    "recurrentes": "Регулярні",
+    "objetivos": "Цілі",
+    "reglas": "Правила",
+    "amigos": "Друзі",
+    "grupos": "Групи",
+    "deudas": "Борги",
+    "inversiones": "Інвестиції",
+    "insights": "Аналітика",
+    "ajustes": "Налаштування"
+  },
+  "common": {
+    "guardar": "Зберегти",
+    "cancelar": "Скасувати",
+    "eliminar": "Видалити",
+    "editar": "Редагувати",
+    "crear": "Створити",
+    "aceptar": "Прийняти",
+    "cerrar": "Закрити",
+    "cargando": "Завантаження…",
+    "error": "Помилка",
+    "exito": "Збережено",
+    "proximamente": "Незабаром",
+    "opcional": "необов'язково",
+    "activo": "Активний",
+    "inactivo": "Неактивний",
+    "activado": "Увімкнено",
+    "desactivado": "Вимкнено",
+    "nuevo": "Новий",
+    "sin_datos": "Немає даних",
+    "hoy": "Сьогодні",
+    "ayer": "Вчора"
+  },
+  "ajustes": {
+    "titulo": "Налаштування",
+    "cuenta_perfil": "Акаунт і профіль",
+    "editar_nombre": "Редагувати ім'я",
+    "editar_email": "Редагувати email",
+    "cambiar_contrasena": "Змінити пароль",
+    "exportar_datos": "Експортувати дані",
+    "seguridad": "Безпека та конфіденційність",
+    "bloqueo_pin": "PIN-блокування",
+    "ocultar_importes": "Приховати суми",
+    "modo_emergencia": "Режим надзвичайної ситуації",
+    "preferencias": "Налаштування",
+    "tema": "Тема",
+    "idioma": "Мова",
+    "moneda_principal": "Основна валюта",
+    "formato_fecha": "Формат дати",
+    "primer_dia_mes": "Перший день місяця",
+    "primer_dia_semana": "Перший день тижня",
+    "notificaciones": "Сповіщення",
+    "recordatorio_diario": "Щоденне нагадування",
+    "alertas_presupuesto": "Попередження бюджету",
+    "informacion": "Інформація",
+    "sobre_app": "Про Finzen",
+    "politica_privacidad": "Політика конфіденційності",
+    "terminos": "Умови використання",
+    "ayuda": "Допомога та підтримка",
+    "cerrar_sesion": "Вийти",
+    "cerrar_sesion_confirmar": "Вийти?",
+    "cerrar_sesion_desc": "Вам потрібно буде вибрати профіль знову при поверненні.",
+    "tema_claro": "Світла",
+    "tema_oscuro": "Темна",
+    "tema_sistema": "Системна",
+    "lunes": "Понеділок",
+    "martes": "Вівторок",
+    "miercoles": "Середа",
+    "domingo": "Неділя",
+    "sabado": "Субота"
+  },
+  "dashboard": {
+    "saldo_total": "Загальний баланс",
+    "ingresar": "Дохід",
+    "gastar": "Витрата",
+    "transferir": "Переказ",
+    "anadir": "Додати",
+    "ultimos_movimientos": "Останні транзакції",
+    "ver_todos": "Переглянути всі",
+    "presupuestos": "Бюджети",
+    "sin_movimientos": "Немає нещодавніх транзакцій"
+  },
+  "cuentas": {
+    "titulo": "Рахунки",
+    "nueva_cuenta": "Новий рахунок",
+    "sin_cuentas": "Рахунків ще немає",
+    "sin_cuentas_desc": "Додайте перший рахунок, щоб почати відстежувати фінанси.",
+    "archivadas": "Архівовані"
+  },
+  "movimientos": {
+    "titulo": "Транзакції",
+    "nuevo": "Нова транзакція",
+    "ingreso": "Дохід",
+    "gasto": "Витрата",
+    "transferencia": "Переказ",
+    "sin_movimientos": "Немає транзакцій",
+    "concepto": "Опис",
+    "importe": "Сума",
+    "fecha": "Дата",
+    "categoria": "Категорія",
+    "cuenta": "Рахунок",
+    "notas": "Нотатки"
+  },
+  "presupuestos": {
+    "titulo": "Бюджети",
+    "nuevo": "Новий бюджет",
+    "sin_presupuestos": "Немає бюджетів",
+    "consumido": "Витрачено",
+    "restante": "Залишилось",
+    "superado": "Перевищено"
+  },
+  "recurrentes": {
+    "titulo": "Регулярні",
+    "nuevo": "Новий регулярний",
+    "sin_recurrentes": "Немає регулярних платежів",
+    "pausar": "Призупинити",
+    "reanudar": "Відновити",
+    "proxima": "Наступний"
+  },
+  "objetivos": {
+    "titulo": "Цілі",
+    "nuevo": "Нова ціль",
+    "sin_objetivos": "Немає цілей",
+    "aportar": "Поповнити",
+    "aportado": "Поповнено",
+    "objetivo": "Ціль",
+    "falta": "Залишилось",
+    "fecha_limite": "Кінцевий термін"
+  },
+  "deudas": {
+    "titulo": "Борги",
+    "nueva": "Новий борг",
+    "sin_deudas": "Немає боргів"
+  },
+  "inversiones": {
+    "titulo": "Інвестиції",
+    "sin_inversiones": "Немає інвестицій"
+  },
+  "reglas": {
+    "titulo": "Правила",
+    "nueva": "Нове правило",
+    "sin_reglas": "Немає правил"
+  },
+  "amigos": {
+    "titulo": "Друзі",
+    "nuevo": "Додати друга",
+    "sin_amigos": "Немає друзів"
+  },
+  "grupos": {
+    "titulo": "Групи",
+    "nuevo": "Нова група",
+    "sin_grupos": "Немає груп"
+  },
+  "insights": {
+    "titulo": "Аналітика"
+  },
+  "meses": {
+    "1": "Січень", "2": "Лютий", "3": "Березень", "4": "Квітень",
+    "5": "Травень", "6": "Червень", "7": "Липень", "8": "Серпень",
+    "9": "Вересень", "10": "Жовтень", "11": "Листопад", "12": "Грудень"
+  },
+  "dias": {
+    "lun": "Пн", "mar": "Вт", "mie": "Ср", "jue": "Чт",
+    "vie": "Пт", "sab": "Сб", "dom": "Нд"
+  }
+}

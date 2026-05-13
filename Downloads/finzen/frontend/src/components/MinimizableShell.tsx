@@ -1,23 +1,46 @@
 import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { clsx } from "clsx";
+import { useTranslation } from "react-i18next";
+import {
+  Home, CreditCard, ClipboardList, ArrowLeftRight, BarChart3,
+  Repeat, Target, Zap, Users, Handshake, Banknote,
+  TrendingUp, Lightbulb, Settings, type LucideIcon,
+} from "lucide-react";
 
-const SECTIONS = [
-  { id: "dashboard",    emoji: "🏠", label: "Inicio" },
-  { id: "cuentas",      emoji: "💳", label: "Cuentas" },
-  { id: "movimientos",  emoji: "📋", label: "Movimientos" },
-  { id: "transferencias", emoji: "🔄", label: "Transfers" },
-  { id: "presupuestos", emoji: "📊", label: "Presupuesto" },
-  { id: "recurrentes",  emoji: "🔁", label: "Recurrentes" },
-  { id: "objetivos",    emoji: "🎯", label: "Objetivos" },
-  { id: "reglas",       emoji: "⚡", label: "Reglas" },
-  { id: "amigos",       emoji: "👥", label: "Amigos" },
-  { id: "grupos",       emoji: "🤝", label: "Grupos" },
-  { id: "deudas",       emoji: "💸", label: "Deudas" },
-  { id: "inversiones",  emoji: "📈", label: "Inversiones" },
-  { id: "insights",     emoji: "💡", label: "Insights" },
-  { id: "ajustes",      emoji: "⚙️", label: "Ajustes" },
+const SECTION_IDS: { id: string; key: string; Icon: LucideIcon }[] = [
+  { id: "dashboard",      key: "nav.dashboard",      Icon: Home },
+  { id: "cuentas",        key: "nav.cuentas",        Icon: CreditCard },
+  { id: "movimientos",    key: "nav.movimientos",    Icon: ClipboardList },
+  { id: "transferencias", key: "nav.transferencias", Icon: ArrowLeftRight },
+  { id: "presupuestos",   key: "nav.presupuestos",   Icon: BarChart3 },
+  { id: "recurrentes",    key: "nav.recurrentes",    Icon: Repeat },
+  { id: "objetivos",      key: "nav.objetivos",      Icon: Target },
+  { id: "reglas",         key: "nav.reglas",         Icon: Zap },
+  { id: "amigos",         key: "nav.amigos",         Icon: Users },
+  { id: "grupos",         key: "nav.grupos",         Icon: Handshake },
+  { id: "deudas",         key: "nav.deudas",         Icon: Banknote },
+  { id: "inversiones",    key: "nav.inversiones",    Icon: TrendingUp },
+  { id: "insights",       key: "nav.insights",       Icon: Lightbulb },
+  { id: "ajustes",        key: "nav.ajustes",        Icon: Settings },
 ];
+
+// ── Physics constants ────────────────────────────────────────────────────────
+const ITEM_W        = 68;   // px per carousel slot
+const MARGIN        = 16;   // px from screen edge when open
+const DRAG_MULT     = 2.8;  // strip moves faster than finger (reach ends easily)
+const FRICTION      = 0.91; // velocity multiplier per ~16ms frame
+const MIN_VEL       = 0.14; // px/ms — threshold to enter snap phase
+const SNAP_EASE     = 0.27; // lerp factor for snap animation
+const BOUNCE_RETURN = 0.16; // velocity fraction returned on edge bounce
+const RUBBER_FACTOR = 0.20; // resistance at edges during drag
+const LONG_PRESS_MS = 320;
+const INACTIVITY_MS = 3500;
+
+// Active green from --color-accent-positive
+const GREEN_ACTIVE = "#C7FF6B";
+const GREEN_MID    = "#7DB83A";
+const GREEN_DIM    = "rgba(255,255,255,0.20)";
 
 interface Props {
   children: React.ReactNode;
@@ -26,79 +49,206 @@ interface Props {
 }
 
 export function MinimizableShell({ children, currentSection, onSectionChange }: Props) {
-  const [pickerOpen, setPickerOpen] = useState(false);
-  const [hoveredId, setHoveredId] = useState(currentSection);
+  const [isOpen, setIsOpen] = useState(false);
+  const { t } = useTranslation();
+  const SECTIONS = SECTION_IDS.map(s => ({ ...s, label: t(s.key) }));
 
-  // Refs — no re-renders during gesture
-  const triggerRef  = useRef<HTMLDivElement>(null);
-  const timerRef    = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const startPos    = useRef({ x: 0, y: 0 });
-  const longFired   = useRef(false);
-  const capturedPtr = useRef<number | null>(null);
+  const pillRef   = useRef<HTMLDivElement>(null);
+  const stripRef  = useRef<HTMLDivElement>(null);
+  const timerRef  = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const inactRef  = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const rafRef    = useRef<number>(0);
+  const longFired = useRef(false);
+  const startX    = useRef(0);
+  const startY    = useRef(0);
+  const lastX     = useRef(0);
+  const lastT     = useRef(0);
+  const velRef    = useRef(0);
+  const offsetRef = useRef(0);
+  const selIdxRef = useRef(0);
 
-  /** Mapea posición X de pantalla → id de sección */
-  function sectionAt(clientX: number): string {
-    const idx = Math.max(
-      0,
-      Math.min(SECTIONS.length - 1, Math.floor((clientX / window.innerWidth) * SECTIONS.length))
-    );
-    return SECTIONS[idx].id;
+  const currentIdx = Math.max(0, SECTIONS.findIndex(s => s.id === currentSection));
+  const current    = SECTIONS[currentIdx];
+
+  // ── Geometry ───────────────────────────────────────────────────────────────
+
+  function pillW() { return (typeof window !== "undefined" ? window.innerWidth : 390) - 2 * MARGIN; }
+
+  function centerOffset(idx: number) { return pillW() / 2 - idx * ITEM_W - ITEM_W / 2; }
+
+  function getBounds() {
+    const pw = pillW();
+    return { min: pw / 2 - (SECTIONS.length - 1) * ITEM_W - ITEM_W / 2, max: pw / 2 - ITEM_W / 2 };
+  }
+
+  function idxFromOffset(off: number) {
+    const raw = (pillW() / 2 - ITEM_W / 2 - off) / ITEM_W;
+    return Math.max(0, Math.min(SECTIONS.length - 1, Math.round(raw)));
+  }
+
+  // ── DOM-direct rendering — 60fps, zero React re-renders during gesture ─────
+
+  function applyOffset(off: number) {
+    if (!stripRef.current) return;
+    stripRef.current.style.transform = `translateX(${off}px)`;
+
+    const center = pillW() / 2;
+    stripRef.current.querySelectorAll<HTMLDivElement>("[data-item]").forEach((el, i) => {
+      const dist = Math.abs(off + i * ITEM_W + ITEM_W / 2 - center) / ITEM_W;
+
+      el.style.transform = `scale(${Math.max(0.55, 1.18 - dist * 0.26).toFixed(3)})`;
+      el.style.opacity   = Math.max(0.10, 1 - dist * 0.46).toFixed(2);
+
+      const iconWrap = el.querySelector<HTMLElement>("[data-icon]");
+      if (iconWrap) {
+        iconWrap.style.color = dist < 0.32 ? GREEN_ACTIVE : dist < 1.15 ? GREEN_MID : GREEN_DIM;
+      }
+    });
+
+    selIdxRef.current = idxFromOffset(off);
+  }
+
+  function clampBounce(raw: number) {
+    const { min, max } = getBounds();
+    if (raw < min) return min + (raw - min) * RUBBER_FACTOR;
+    if (raw > max) return max + (raw - max) * RUBBER_FACTOR;
+    return raw;
+  }
+
+  // ── rAF / timers ───────────────────────────────────────────────────────────
+
+  function cancelRaf() {
+    if (rafRef.current) { cancelAnimationFrame(rafRef.current); rafRef.current = 0; }
+  }
+  function clearInact() {
+    if (inactRef.current) { clearTimeout(inactRef.current); inactRef.current = null; }
+  }
+  function resetInact() {
+    clearInact();
+    inactRef.current = setTimeout(() => snapAndClose(selIdxRef.current), INACTIVITY_MS);
+  }
+
+  function snapAndClose(idx: number) {
+    clearInact(); cancelRaf();
+    const target = centerOffset(idx);
+    function step() {
+      if (!stripRef.current) return;
+      const diff = target - offsetRef.current;
+      if (Math.abs(diff) < 0.3) {
+        offsetRef.current = target;
+        applyOffset(target);
+        onSectionChange(SECTIONS[idx].id);
+        setIsOpen(false);
+        longFired.current = false;
+        return;
+      }
+      offsetRef.current += diff * SNAP_EASE;
+      applyOffset(offsetRef.current);
+      rafRef.current = requestAnimationFrame(step);
+    }
+    rafRef.current = requestAnimationFrame(step);
+  }
+
+  function startMomentumThenClose() {
+    cancelRaf(); clearInact();
+    let vel = velRef.current; // px/ms (already multiplied by DRAG_MULT)
+
+    function tick() {
+      vel *= FRICTION;
+      const raw = offsetRef.current + vel * 16;
+      const { min, max } = getBounds();
+
+      if (raw <= min) { offsetRef.current = min; vel =  Math.abs(vel) * BOUNCE_RETURN; }
+      else if (raw >= max) { offsetRef.current = max; vel = -Math.abs(vel) * BOUNCE_RETURN; }
+      else { offsetRef.current = raw; }
+
+      applyOffset(offsetRef.current);
+
+      if (Math.abs(vel) < MIN_VEL) snapAndClose(selIdxRef.current);
+      else rafRef.current = requestAnimationFrame(tick);
+    }
+
+    if (Math.abs(vel) < MIN_VEL) snapAndClose(selIdxRef.current);
+    else rafRef.current = requestAnimationFrame(tick);
+  }
+
+  // ── Gesture handlers ───────────────────────────────────────────────────────
+
+  function openCarousel(clientX: number, pointerId: number) {
+    const initOff = centerOffset(currentIdx);
+    offsetRef.current = initOff;
+    selIdxRef.current = currentIdx;
+    velRef.current    = 0;
+    lastX.current     = clientX;
+    lastT.current     = performance.now();
+
+    setIsOpen(true);
+    navigator.vibrate?.(10);
+    pillRef.current?.setPointerCapture(pointerId);
+    resetInact();
+    requestAnimationFrame(() => applyOffset(initOff));
   }
 
   function onDown(e: React.PointerEvent<HTMLDivElement>) {
     e.preventDefault();
-    startPos.current = { x: e.clientX, y: e.clientY };
+    startX.current = e.clientX;
+    startY.current = e.clientY;
+    lastX.current  = e.clientX;
+    lastT.current  = performance.now();
+    velRef.current = 0;
     longFired.current = false;
-    capturedPtr.current = e.pointerId;
+    cancelRaf();
 
+    const pid = e.pointerId;
     timerRef.current = setTimeout(() => {
       longFired.current = true;
-      navigator.vibrate?.(12);
-      setHoveredId(sectionAt(e.clientX));
-      setPickerOpen(true);
-      triggerRef.current?.setPointerCapture(e.pointerId);
-    }, 340);
+      openCarousel(e.clientX, pid);
+    }, LONG_PRESS_MS);
   }
 
   function onMove(e: React.PointerEvent<HTMLDivElement>) {
     if (!longFired.current) {
-      // Cancela el long-press si el dedo se movió antes de los 340ms
-      const d = Math.hypot(e.clientX - startPos.current.x, e.clientY - startPos.current.y);
-      if (d > 8 && timerRef.current) {
-        clearTimeout(timerRef.current);
-        timerRef.current = null;
-      }
+      const d = Math.hypot(e.clientX - startX.current, e.clientY - startY.current);
+      if (d > 8 && timerRef.current) { clearTimeout(timerRef.current); timerRef.current = null; }
       return;
     }
-    setHoveredId(sectionAt(e.clientX));
+
+    const now = performance.now();
+    const dt  = now - lastT.current;
+    const dx  = e.clientX - lastX.current;
+
+    // Multiply both offset delta and velocity by DRAG_MULT for faster traversal
+    if (dt > 0) velRef.current = (dx * DRAG_MULT) / dt;
+    lastX.current = e.clientX;
+    lastT.current = now;
+
+    offsetRef.current = clampBounce(offsetRef.current + dx * DRAG_MULT);
+    applyOffset(offsetRef.current);
+    resetInact();
   }
 
   function onUp(_e: React.PointerEvent<HTMLDivElement>) {
-    cancelTimer();
-    if (longFired.current) {
-      onSectionChange(hoveredId);
-      setPickerOpen(false);
-      longFired.current = false;
-    }
+    if (timerRef.current) { clearTimeout(timerRef.current); timerRef.current = null; }
+    if (!longFired.current) return;
+    startMomentumThenClose();
   }
 
   function onCancel() {
-    cancelTimer();
-    setPickerOpen(false);
+    if (timerRef.current) { clearTimeout(timerRef.current); timerRef.current = null; }
+    clearInact(); cancelRaf();
+    setIsOpen(false);
     longFired.current = false;
   }
 
-  function cancelTimer() {
-    if (timerRef.current) { clearTimeout(timerRef.current); timerRef.current = null; }
-  }
+  const openWidth = typeof window !== "undefined" ? window.innerWidth - 2 * MARGIN : 358;
 
   return (
     <>
-      {/* ── Desktop (sidebar lateral, sin cambios) ──────────────── */}
-      <div className="hidden lg:flex h-screen overflow-hidden bg-[#F7F7F9]">
-        <nav className="w-52 flex-shrink-0 bg-white border-r border-[#EBEBED] flex flex-col py-5 overflow-y-auto">
+      {/* ── Desktop sidebar ─────────────────────────────────────────── */}
+      <div className="hidden lg:flex h-screen overflow-hidden bg-app">
+        <nav className="w-52 flex-shrink-0 bg-surface border-r border-[var(--color-border-ui)] flex flex-col py-5 overflow-y-auto">
           <div className="px-4 mb-5">
-            <p className="text-ink font-bold text-xl">Finzen</p>
+            <p className="text-fg font-bold text-xl">Finzen</p>
           </div>
           <div className="flex-1 px-2 space-y-0.5">
             {SECTIONS.map((s) => (
@@ -107,126 +257,111 @@ export function MinimizableShell({ children, currentSection, onSectionChange }: 
                 onClick={() => onSectionChange(s.id)}
                 className={clsx(
                   "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all",
-                  currentSection === s.id ? "bg-ink text-white" : "text-[#3A3A3C] hover:bg-[#F2F2F4]"
+                  currentSection === s.id ? "bg-ink text-white" : "text-fg hover:bg-surface-2"
                 )}
               >
-                <span className="text-base w-5 text-center">{s.emoji}</span>
+                <s.Icon className="w-4 h-4 flex-shrink-0" strokeWidth={2} />
                 <span>{s.label}</span>
               </button>
             ))}
           </div>
         </nav>
-        <main className="flex-1 overflow-y-auto bg-[#F7F7F9]">
+        <main className="flex-1 overflow-y-auto bg-app">
           <div className="max-w-2xl mx-auto min-h-full">{children}</div>
         </main>
       </div>
 
-      {/* ── Mobile (full-screen, sin encogimiento) ──────────────── */}
-      <div
-        className="lg:hidden relative overflow-hidden bg-app"
-        style={{ height: "100svh" }}
-      >
-        {/* Contenido — ocupa toda la pantalla */}
-        <div className="h-full overflow-y-auto">{children}</div>
+      {/* ── Mobile ──────────────────────────────────────────────────── */}
+      <div className="lg:hidden relative overflow-hidden bg-app" style={{ height: "100svh" }}>
+        <div className="h-full overflow-y-auto pb-16">{children}</div>
 
-        {/* Backdrop oscuro cuando el picker está abierto */}
-        <AnimatePresence>
-          {pickerOpen && (
-            <motion.div
-              key="backdrop"
-              className="absolute inset-0 pointer-events-none"
-              style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(6px)" }}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.15 }}
-            />
-          )}
-        </AnimatePresence>
-
-        {/* Picker de secciones */}
-        <AnimatePresence>
-          {pickerOpen && (
-            <motion.div
-              key="picker"
-              className="absolute left-0 right-0 pointer-events-none select-none"
-              style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 18px)" }}
-              initial={{ y: 60, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              exit={{ y: 60, opacity: 0 }}
-              transition={{ type: "spring", damping: 32, stiffness: 420 }}
-            >
-              {/* Nombre de la sección bajo el dedo */}
-              <div className="flex justify-center mb-2.5">
-                <span className="bg-white/20 backdrop-blur-md text-white text-sm font-semibold px-5 py-1.5 rounded-full">
-                  {SECTIONS.find((s) => s.id === hoveredId)?.label ?? ""}
-                </span>
-              </div>
-
-              {/* Tira de emojis */}
-              <div className="mx-3 rounded-3xl overflow-hidden"
-                style={{ background: "rgba(255,255,255,0.15)", backdropFilter: "blur(16px)" }}
-              >
-                <div className="flex">
-                  {SECTIONS.map((s) => {
-                    const isHovered = s.id === hoveredId;
-                    const isCurrent = s.id === currentSection;
-                    return (
-                      <div
-                        key={s.id}
-                        className={clsx(
-                          "flex-1 flex items-center justify-center py-3 transition-all",
-                          isHovered ? "rounded-2xl m-1" : ""
-                        )}
-                        style={{
-                          background: isHovered ? "rgba(255,255,255,0.95)" : "transparent",
-                          transition: "background 60ms, transform 60ms",
-                        }}
-                      >
-                        <span
-                          style={{
-                            fontSize: isHovered ? 22 : 18,
-                            opacity: isHovered ? 1 : isCurrent ? 0.85 : 0.45,
-                            transition: "font-size 60ms, opacity 60ms",
-                            display: "inline-block",
-                          }}
-                        >
-                          {s.emoji}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Trigger — pastilla en la parte inferior central */}
+        {/* Dynamic Island pill */}
         <div
-          ref={triggerRef}
+          ref={pillRef}
+          className="absolute left-1/2 -translate-x-1/2 z-[35] touch-none select-none"
+          style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 10px)" }}
           onPointerDown={onDown}
           onPointerMove={onMove}
           onPointerUp={onUp}
           onPointerCancel={onCancel}
-          className="absolute left-1/2 -translate-x-1/2 flex items-center justify-center touch-none select-none z-50"
-          style={{
-            bottom: "calc(env(safe-area-inset-bottom, 0px) + 5px)",
-            width: 80,
-            height: 22,
-            cursor: "pointer",
-          }}
-          aria-label="Mantén pulsado para cambiar de sección"
         >
           <motion.div
-            className="rounded-full"
-            animate={{
-              width: pickerOpen ? 44 : 34,
-              height: 5,
-              backgroundColor: pickerOpen ? "rgba(255,255,255,0.7)" : "rgba(0,0,0,0.18)",
-            }}
-            transition={{ duration: 0.15 }}
-          />
+            className="relative overflow-hidden"
+            style={{ background: "#000" }}
+            animate={{ width: isOpen ? openWidth : 140, height: isOpen ? 60 : 46, borderRadius: 99 }}
+            transition={{ type: "spring", damping: 26, stiffness: 360, mass: 0.8 }}
+          >
+            {/* Closed — section name in green */}
+            <AnimatePresence>
+              {!isOpen && (
+                <motion.div
+                  key="closed"
+                  className="absolute inset-0 flex items-center justify-center px-4"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.12 }}
+                >
+                  <span style={{ color: GREEN_ACTIVE, fontSize: 13, fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase" }}>
+                    {current.label}
+                  </span>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Open — icon carousel */}
+            <AnimatePresence>
+              {isOpen && (
+                <motion.div
+                  key="open"
+                  className="absolute inset-0"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.08 }}
+                >
+                  {/* Edge fades */}
+                  <div className="absolute left-0 top-0 bottom-0 w-10 z-10 pointer-events-none"
+                    style={{ background: "linear-gradient(to right, #000 30%, transparent)" }} />
+                  <div className="absolute right-0 top-0 bottom-0 w-10 z-10 pointer-events-none"
+                    style={{ background: "linear-gradient(to left, #000 30%, transparent)" }} />
+
+                  {/* Center indicator line */}
+                  <div className="absolute top-2 bottom-2 left-1/2 -translate-x-1/2 w-px z-10 pointer-events-none"
+                    style={{ background: "rgba(199,255,107,0.3)" }} />
+
+                  {/* Strip — translated via DOM for 60fps */}
+                  <div
+                    ref={stripRef}
+                    className="absolute top-0 left-0 flex items-center h-full will-change-transform"
+                    style={{ width: SECTIONS.length * ITEM_W }}
+                  >
+                    {SECTIONS.map((s, i) => {
+                      const dist      = Math.abs(i - currentIdx);
+                      const initScale = Math.max(0.55, 1.18 - dist * 0.26);
+                      const initOpac  = Math.max(0.10, 1    - dist * 0.46);
+                      const initColor = dist < 0.5 ? GREEN_ACTIVE : dist < 1.5 ? GREEN_MID : GREEN_DIM;
+                      return (
+                        <div
+                          key={s.id}
+                          data-item
+                          className="flex items-center justify-center flex-shrink-0"
+                          style={{ width: ITEM_W, transform: `scale(${initScale})`, opacity: initOpac }}
+                        >
+                          <span
+                            data-icon
+                            style={{ color: initColor, display: "flex", alignItems: "center", justifyContent: "center" }}
+                          >
+                            <s.Icon size={20} strokeWidth={dist < 0.5 ? 2.5 : 2} />
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.div>
         </div>
       </div>
     </>

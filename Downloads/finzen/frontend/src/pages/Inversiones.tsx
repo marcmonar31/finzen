@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { TrendingUp, TrendingDown, Plus, RefreshCw, X } from "lucide-react";
-import { toast } from "sonner";
+import { showFlash } from "@/stores/flash";
 import { clsx } from "clsx";
 import {
   useActivos,
@@ -49,36 +49,36 @@ function NuevaPosicionSheet({ onClose }: { onClose: () => void }) {
   const [precioMedio, setPrecioMedio] = useState("");
 
   async function handleSubmit() {
-    if (!cantidad || !precioMedio) { toast.error("Rellena todos los campos"); return; }
+    if (!cantidad || !precioMedio) { showFlash("Rellena todos los campos", "error"); return; }
 
     let resolvedActivoId = activoId;
 
     if (tab === "nueva") {
-      if (!ticker || !nombre) { toast.error("Introduce ticker y nombre"); return; }
+      if (!ticker || !nombre) { showFlash("Introduce ticker y nombre", "error"); return; }
       try {
         const activo = await crearActivo.mutateAsync({ ticker, nombre, tipo, moneda });
         resolvedActivoId = activo.id;
       } catch (e: unknown) {
-        toast.error(e instanceof Error ? e.message : "Error al crear activo");
+        showFlash(e instanceof Error ? e.message : "Error al crear activo", "error");
         return;
       }
     }
 
-    if (!resolvedActivoId) { toast.error("Selecciona un activo"); return; }
+    if (!resolvedActivoId) { showFlash("Selecciona un activo", "error"); return; }
 
     try {
       await crearPosicion.mutateAsync({ activo_id: resolvedActivoId, cantidad, precio_medio: precioMedio });
-      toast.success("Posición añadida");
+      showFlash("Posición añadida");
       onClose();
     } catch (e: unknown) {
-      toast.error(e instanceof Error ? e.message : "Error al crear posición");
+      showFlash(e instanceof Error ? e.message : "Error al crear posición", "error");
     }
   }
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center">
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-      <div className="relative w-full max-w-lg bg-white rounded-t-3xl p-6 max-h-[90vh] overflow-y-auto">
+      <div className="relative w-full max-w-lg bg-surface rounded-t-3xl p-6 max-h-[90vh] overflow-y-auto">
         <div className="w-10 h-1 bg-gray-300 rounded-full mx-auto mb-5" />
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-lg font-semibold">Nueva posición</h2>
@@ -167,8 +167,9 @@ function NuevaPosicionSheet({ onClose }: { onClose: () => void }) {
             <label className="text-xs text-gray-500 mb-1 block">Cantidad</label>
             <input
               type="number"
+              inputMode="decimal"
               className="w-full border rounded-xl px-3 py-2 text-sm"
-              placeholder="10.5"
+              placeholder="10,5"
               value={cantidad}
               onChange={(e) => setCantidad(e.target.value)}
             />
@@ -177,8 +178,9 @@ function NuevaPosicionSheet({ onClose }: { onClose: () => void }) {
             <label className="text-xs text-gray-500 mb-1 block">Precio medio</label>
             <input
               type="number"
+              inputMode="decimal"
               className="w-full border rounded-xl px-3 py-2 text-sm"
-              placeholder="220.00"
+              placeholder="220,00"
               value={precioMedio}
               onChange={(e) => setPrecioMedio(e.target.value)}
             />
@@ -204,7 +206,7 @@ function PosicionCard({ pos }: { pos: PosicionDetalle }) {
   const positivo = parseFloat(pos.pl_absoluto) >= 0;
 
   return (
-    <div className="bg-white rounded-2xl p-4 shadow-sm">
+    <div className="bg-surface rounded-2xl p-4 shadow-sm">
       <div className="flex justify-between items-start">
         <div>
           <div className="flex items-center gap-2">
@@ -248,9 +250,9 @@ function PosicionCard({ pos }: { pos: PosicionDetalle }) {
           if (!confirm(`¿Cerrar posición de ${pos.ticker}?`)) return;
           try {
             await cerrar.mutateAsync(pos.posicion_id);
-            toast.success("Posición cerrada");
+            showFlash("Posición cerrada", "delete");
           } catch {
-            toast.error("Error al cerrar la posición");
+            showFlash("Error al cerrar la posición", "error");
           }
         }}
         className="mt-3 w-full text-xs text-red-400 hover:text-red-600 py-1"
@@ -275,9 +277,9 @@ export default function Inversiones() {
     try {
       const r = await actualizarPrecios.mutateAsync(undefined);
       const res = r as { actualizados: number };
-      toast.success(`Precios actualizados (${res.actualizados} activos)`);
+      showFlash(`Precios actualizados (${res.actualizados} activos)`);
     } catch {
-      toast.error("Error al actualizar precios");
+      showFlash("Error al actualizar precios", "error");
     }
   }
 
@@ -291,7 +293,7 @@ export default function Inversiones() {
             <button
               onClick={handleActualizar}
               disabled={actualizarPrecios.isPending}
-              className="p-2 bg-white rounded-xl shadow-sm text-gray-500 hover:text-indigo-600 disabled:opacity-50"
+              className="p-2 bg-surface rounded-xl shadow-sm text-gray-500 hover:text-indigo-600 disabled:opacity-50"
             >
               <RefreshCw size={18} className={actualizarPrecios.isPending ? "animate-spin" : ""} />
             </button>

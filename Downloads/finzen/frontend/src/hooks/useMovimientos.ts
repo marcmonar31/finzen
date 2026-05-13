@@ -5,10 +5,13 @@ import { useWorkspaceStore } from "@/stores/workspace";
 
 const KEY = "movimientos";
 
-interface FiltrosMovimientos {
+export interface FiltrosMovimientos {
   cuenta_id?: string;
   categoria_id?: string;
+  tipo?: "ingreso" | "gasto";
   busqueda?: string;
+  fecha_desde?: string;
+  fecha_hasta?: string;
   limit?: number;
   offset?: number;
 }
@@ -16,11 +19,14 @@ interface FiltrosMovimientos {
 export function useMovimientos(filtros: FiltrosMovimientos = {}) {
   const ws = useWorkspaceStore((s) => s.workspace);
   const params = new URLSearchParams();
-  if (filtros.cuenta_id) params.set("cuenta_id", filtros.cuenta_id);
+  if (filtros.cuenta_id)   params.set("cuenta_id",   filtros.cuenta_id);
   if (filtros.categoria_id) params.set("categoria_id", filtros.categoria_id);
-  if (filtros.busqueda) params.set("busqueda", filtros.busqueda);
-  if (filtros.limit) params.set("limit", String(filtros.limit));
-  if (filtros.offset) params.set("offset", String(filtros.offset));
+  if (filtros.tipo)        params.set("tipo",         filtros.tipo);
+  if (filtros.busqueda)    params.set("busqueda",     filtros.busqueda);
+  if (filtros.fecha_desde) params.set("fecha_desde",  filtros.fecha_desde);
+  if (filtros.fecha_hasta) params.set("fecha_hasta",  filtros.fecha_hasta);
+  if (filtros.limit)       params.set("limit",        String(filtros.limit));
+  if (filtros.offset)      params.set("offset",       String(filtros.offset));
 
   return useQuery<Movimiento[]>({
     queryKey: [KEY, ws?.id, filtros],
@@ -54,6 +60,19 @@ export function useArchivarMovimiento() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => api.delete<void>(`/movimientos/${id}`),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: [KEY] });
+      qc.invalidateQueries({ queryKey: ["cuentas"] });
+      qc.invalidateQueries({ queryKey: ["dashboard-resumen"] });
+    },
+  });
+}
+
+export function useActualizarMovimiento() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, body }: { id: string; body: Record<string, unknown> }) =>
+      api.patch<Movimiento>(`/movimientos/${id}`, body),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: [KEY] });
       qc.invalidateQueries({ queryKey: ["cuentas"] });

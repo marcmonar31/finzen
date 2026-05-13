@@ -7,7 +7,9 @@ const SYMBOLS: Record<string, string> = {
 export function formatCurrency(amount: string | number, currency = "EUR"): string {
   const d = new Decimal(amount);
   const symbol = SYMBOLS[currency] ?? currency;
-  const abs = d.abs().toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  const [enteros, decimales] = d.abs().toFixed(2).split(".");
+  const milesStr = enteros.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  const abs = `${milesStr},${decimales}`;
   const sign = d.isNegative() ? "-" : "";
   return currency === "EUR" ? `${sign}${abs} ${symbol}` : `${sign}${symbol}${abs}`;
 }

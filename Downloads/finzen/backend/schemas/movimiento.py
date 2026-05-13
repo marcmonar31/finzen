@@ -83,3 +83,5 @@ class MovimientoOut(BaseModel):
     actualizado_en: datetime
     categoria_emoji: Optional[str] = None
     categoria_nombre: Optional[str] = None
+    cuenta_nombre: Optional[str] = None
+    cuenta_contraparte_nombre: Optional[str] = None

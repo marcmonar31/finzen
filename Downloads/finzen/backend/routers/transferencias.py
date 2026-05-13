@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 from fastapi import APIRouter, Depends
 from sqlmodel import Session, select
 
@@ -8,6 +8,7 @@ from models.movimiento import Movimiento
 from models.categoria import Categoria
 from models.workspace import Workspace
 from models.usuario import Usuario
+from models.cuenta import Cuenta
 from deps import get_current_user
 from deps import get_current_workspace
 from schemas.transferencia import TransferenciaCreate, TransferenciaOut
@@ -17,13 +18,17 @@ from services.transferencias import crear_transferencia as _crear_transferencia
 router = APIRouter(prefix="/transferencias", tags=["transferencias"])
 
 
-def _enrich_movimiento(mov: Movimiento, session: Session) -> MovimientoOut:
+def _enrich_movimiento(mov: Movimiento, session: Session, contraparte_cuenta_nombre: Optional[str] = None) -> MovimientoOut:
     out = MovimientoOut.model_validate(mov)
     if mov.categoria_id:
         cat = session.get(Categoria, mov.categoria_id)
         if cat:
             out.categoria_emoji = cat.emoji
             out.categoria_nombre = cat.nombre
+    cuenta = session.get(Cuenta, mov.cuenta_id)
+    if cuenta:
+        out.cuenta_nombre = cuenta.nombre
+    out.cuenta_contraparte_nombre = contraparte_cuenta_nombre
     return out
 
 
@@ -31,10 +36,18 @@ def _enrich_transferencia(t: Transferencia, session: Session) -> TransferenciaOu
     out = TransferenciaOut.model_validate(t)
     mov_orig = session.get(Movimiento, t.movimiento_origen_id)
     mov_dest = session.get(Movimiento, t.movimiento_destino_id)
+    cuenta_orig_nombre = None
+    cuenta_dest_nombre = None
     if mov_orig:
-        out.movimiento_origen = _enrich_movimiento(mov_orig, session)
+        c = session.get(Cuenta, mov_orig.cuenta_id)
+        cuenta_orig_nombre = c.nombre if c else None
     if mov_dest:
-        out.movimiento_destino = _enrich_movimiento(mov_dest, session)
+        c = session.get(Cuenta, mov_dest.cuenta_id)
+        cuenta_dest_nombre = c.nombre if c else None
+    if mov_orig:
+        out.movimiento_origen = _enrich_movimiento(mov_orig, session, contraparte_cuenta_nombre=cuenta_dest_nombre)
+    if mov_dest:
+        out.movimiento_destino = _enrich_movimiento(mov_dest, session, contraparte_cuenta_nombre=cuenta_orig_nombre)
     return out
 
 
@@ -87,10 +100,12 @@ def archivar(
     if not t or t.workspace_id != workspace.id:
         raise HTTPException(404, "Transferencia no encontrada")
 
+    now = datetime.utcnow()
     for mov_id in [t.movimiento_origen_id, t.movimiento_destino_id]:
         mov = session.get(Movimiento, mov_id)
         if mov:
-            mov.archivado_en = datetime.utcnow()
+            mov.archivado_en = now
             session.add(mov)
 
+    session.delete(t)
     session.commit()

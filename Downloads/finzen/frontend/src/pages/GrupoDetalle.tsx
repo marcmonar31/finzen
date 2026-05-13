@@ -4,7 +4,7 @@ import { useGrupo, useGastosGrupo, useBalanceGrupo, useCrearGasto, useRegistrarL
 import { useUsuarioStore } from "@/stores/usuario";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { clsx } from "clsx";
-import { toast } from "sonner";
+import { showFlash } from "@/stores/flash";
 import Decimal from "decimal.js";
 
 interface Props {
@@ -31,7 +31,7 @@ export function GrupoDetalle({ grupoId, onBack }: Props) {
   const [fecha, setFecha] = useState(new Date().toISOString().slice(0, 10));
   const [pagadorId, setPagadorId] = useState("");
 
-  if (!grupo) return <div className="p-4 text-center text-[#6B6B6F]">Cargando…</div>;
+  if (!grupo) return <div className="p-4 text-center text-fg-muted">Cargando…</div>;
 
   const miActivoId = grupo.miembros.find((m) => m.usuario_id === usuario?.id)?.id;
   const moneda = grupo.moneda_principal;
@@ -58,21 +58,21 @@ export function GrupoDetalle({ grupoId, onBack }: Props) {
         modo_reparto: "igualitario",
         miembro_ids: todosIds,
       });
-      toast.success("Gasto añadido");
+      showFlash("Gasto añadido");
       setConcepto("");
       setImporte("");
       setPagadorId("");
       setShowNuevoGasto(false);
     } catch (e: unknown) {
-      toast.error(e instanceof Error ? e.message : "Error");
+      showFlash(e instanceof Error ? e.message : "Error", "error");
     }
   }
 
   async function handleConfirmarLiq(liq_id: string) {
     try {
       await confirmarLiq.mutateAsync({ grupo_id: grupoId, liq_id });
-      toast.success("Liquidación confirmada");
-    } catch { toast.error("Error"); }
+      showFlash("Liquidación confirmada");
+    } catch { showFlash("Error", "error"); }
   }
 
   return (
@@ -116,7 +116,7 @@ export function GrupoDetalle({ grupoId, onBack }: Props) {
           </button>
           <button
             onClick={() => setShowSaldar(true)}
-            className="flex-1 bg-white text-ink rounded-2xl py-3 font-semibold text-sm shadow-[var(--shadow-card)]"
+            className="flex-1 bg-surface text-fg rounded-2xl py-3 font-semibold text-sm shadow-[var(--shadow-card)]"
           >
             Saldar deudas
           </button>
@@ -124,16 +124,16 @@ export function GrupoDetalle({ grupoId, onBack }: Props) {
 
         {/* Miembros */}
         <div>
-          <p className="text-xs font-semibold text-[#6B6B6F] uppercase tracking-wider mb-2">Miembros</p>
-          <div className="bg-white rounded-2xl divide-y divide-[#F2F2F4] shadow-[var(--shadow-card)]">
+          <p className="text-xs font-semibold text-fg-muted uppercase tracking-wider mb-2">Miembros</p>
+          <div className="bg-surface rounded-2xl divide-y divide-border-ui shadow-[var(--shadow-card)]">
             {grupo.miembros.filter((m) => m.activo).map((m) => {
               const bal = balanceData?.balance ? new Decimal(balanceData.balance[m.id] ?? "0") : new Decimal("0");
               return (
                 <div key={m.id} className="flex items-center justify-between px-4 py-3">
-                  <p className="font-semibold text-ink text-sm">{m.nombre_display}</p>
+                  <p className="font-semibold text-fg text-sm">{m.nombre_display}</p>
                   <p className={clsx(
                     "text-sm font-bold tabular-nums",
-                    bal.gt(0) ? "text-[#5BAA1F]" : bal.lt(0) ? "text-red-500" : "text-[#6B6B6F]"
+                    bal.gt(0) ? "text-[#5BAA1F]" : bal.lt(0) ? "text-red-500" : "text-fg-muted"
                   )}>
                     {bal.gte(0) ? "+" : ""}{formatCurrency(bal.abs().toFixed(4), moneda)}
                   </p>
@@ -146,18 +146,18 @@ export function GrupoDetalle({ grupoId, onBack }: Props) {
         {/* Historial de gastos */}
         {gastos.length > 0 && (
           <div>
-            <p className="text-xs font-semibold text-[#6B6B6F] uppercase tracking-wider mb-2">Historial</p>
-            <div className="bg-white rounded-2xl divide-y divide-[#F2F2F4] shadow-[var(--shadow-card)]">
+            <p className="text-xs font-semibold text-fg-muted uppercase tracking-wider mb-2">Historial</p>
+            <div className="bg-surface rounded-2xl divide-y divide-border-ui shadow-[var(--shadow-card)]">
               {gastos.map((g) => (
                 <div key={g.id} className="flex items-center gap-3 px-4 py-3">
-                  <div className="w-10 h-10 rounded-xl bg-[#F2F2F4] flex items-center justify-center text-xl flex-shrink-0">🧾</div>
+                  <div className="w-10 h-10 rounded-xl bg-surface-2 flex items-center justify-center text-xl flex-shrink-0">🧾</div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-ink text-sm truncate">{g.concepto}</p>
-                    <p className="text-xs text-[#6B6B6F]">
+                    <p className="font-semibold text-fg text-sm truncate">{g.concepto}</p>
+                    <p className="text-xs text-fg-muted">
                       Pagó {miembroNombre(g.pagador_id)} · {formatDate(g.fecha)}
                     </p>
                   </div>
-                  <p className="font-bold text-sm tabular-nums text-ink">
+                  <p className="font-bold text-sm tabular-nums text-fg">
                     {formatCurrency(g.importe, g.moneda)}
                   </p>
                 </div>
@@ -169,15 +169,15 @@ export function GrupoDetalle({ grupoId, onBack }: Props) {
         {/* Liquidaciones pendientes */}
         {liquidaciones.filter((l) => l.estado === "pendiente").length > 0 && (
           <div>
-            <p className="text-xs font-semibold text-[#6B6B6F] uppercase tracking-wider mb-2">Liquidaciones pendientes</p>
-            <div className="bg-white rounded-2xl divide-y divide-[#F2F2F4] shadow-[var(--shadow-card)]">
+            <p className="text-xs font-semibold text-fg-muted uppercase tracking-wider mb-2">Liquidaciones pendientes</p>
+            <div className="bg-surface rounded-2xl divide-y divide-border-ui shadow-[var(--shadow-card)]">
               {liquidaciones.filter((l) => l.estado === "pendiente").map((l) => (
                 <div key={l.id} className="flex items-center justify-between px-4 py-3">
                   <div>
-                    <p className="text-sm text-ink">
+                    <p className="text-sm text-fg">
                       {miembroNombre(l.de_miembro_id)} → {miembroNombre(l.a_miembro_id)}
                     </p>
-                    <p className="text-xs text-[#6B6B6F]">{formatCurrency(l.importe, l.moneda)}</p>
+                    <p className="text-xs text-fg-muted">{formatCurrency(l.importe, l.moneda)}</p>
                   </div>
                   {l.a_miembro_id === miActivoId && (
                     <button
@@ -198,13 +198,13 @@ export function GrupoDetalle({ grupoId, onBack }: Props) {
       {showNuevoGasto && (
         <div className="fixed inset-0 z-50 flex flex-col justify-end">
           <div className="absolute inset-0 bg-black/40" onClick={() => setShowNuevoGasto(false)} />
-          <div className="relative bg-white rounded-t-3xl p-5 space-y-4">
-            <h2 className="font-bold text-lg text-ink">Nuevo gasto</h2>
+          <div className="relative bg-surface rounded-t-3xl p-5 space-y-4">
+            <h2 className="font-bold text-lg text-fg">Nuevo gasto</h2>
             <input
               value={concepto}
               onChange={(e) => setConcepto(e.target.value)}
               placeholder="Concepto"
-              className="w-full bg-[#F2F2F4] rounded-xl px-4 py-3 text-sm text-ink focus:outline-none"
+              className="w-full bg-surface-2 rounded-xl px-4 py-3 text-sm text-fg focus:outline-none"
             />
             <input
               type="number"
@@ -212,10 +212,10 @@ export function GrupoDetalle({ grupoId, onBack }: Props) {
               onChange={(e) => setImporte(e.target.value)}
               placeholder="0,00"
               inputMode="decimal"
-              className="w-full text-center text-3xl font-bold text-ink bg-transparent border-b-2 border-[#E8E8EA] pb-2 focus:outline-none"
+              className="w-full text-center text-3xl font-bold text-fg bg-transparent border-b-2 border-[#E8E8EA] pb-2 focus:outline-none"
             />
             <div>
-              <p className="text-xs text-[#6B6B6F] mb-2 font-medium">¿Quién pagó?</p>
+              <p className="text-xs text-fg-muted mb-2 font-medium">¿Quién pagó?</p>
               <div className="space-y-1">
                 {grupo.miembros.filter((m) => m.activo).map((m) => (
                   <button
@@ -223,7 +223,7 @@ export function GrupoDetalle({ grupoId, onBack }: Props) {
                     onClick={() => setPagadorId(m.id)}
                     className={clsx(
                       "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-left",
-                      pagadorId === m.id ? "bg-ink text-white" : "bg-[#F2F2F4] text-ink"
+                      pagadorId === m.id ? "bg-ink text-white" : "bg-surface-2 text-fg"
                     )}
                   >
                     <span className="font-semibold text-sm">{m.nombre_display}</span>
@@ -235,7 +235,7 @@ export function GrupoDetalle({ grupoId, onBack }: Props) {
               type="date"
               value={fecha}
               onChange={(e) => setFecha(e.target.value)}
-              className="w-full bg-[#F2F2F4] rounded-xl px-4 py-3 text-sm text-ink focus:outline-none"
+              className="w-full bg-surface-2 rounded-xl px-4 py-3 text-sm text-fg focus:outline-none"
             />
             <button
               onClick={handleCrearGasto}
@@ -252,24 +252,24 @@ export function GrupoDetalle({ grupoId, onBack }: Props) {
       {showSaldar && balanceData && (
         <div className="fixed inset-0 z-50 flex flex-col justify-end">
           <div className="absolute inset-0 bg-black/40" onClick={() => setShowSaldar(false)} />
-          <div className="relative bg-white rounded-t-3xl p-5 space-y-4">
-            <h2 className="font-bold text-lg text-ink">Saldar deudas</h2>
-            <p className="text-sm text-[#6B6B6F]">Para que todos queden a 0:</p>
+          <div className="relative bg-surface rounded-t-3xl p-5 space-y-4">
+            <h2 className="font-bold text-lg text-fg">Saldar deudas</h2>
+            <p className="text-sm text-fg-muted">Para que todos queden a 0:</p>
             {balanceData.transferencias_optimas.length === 0 ? (
               <p className="text-center text-[#5BAA1F] font-semibold py-4">¡Todos a cero! Sin deudas.</p>
             ) : (
               <div className="space-y-3">
                 {balanceData.transferencias_optimas.map((t, i) => (
-                  <div key={i} className="bg-[#F2F2F4] rounded-2xl px-4 py-3 flex items-center justify-between">
-                    <p className="text-sm font-semibold text-ink">
+                  <div key={i} className="bg-surface-2 rounded-2xl px-4 py-3 flex items-center justify-between">
+                    <p className="text-sm font-semibold text-fg">
                       {miembroNombre(t.de)} → {miembroNombre(t.a)}
                     </p>
-                    <p className="font-bold text-ink tabular-nums">
+                    <p className="font-bold text-fg tabular-nums">
                       {formatCurrency(new Decimal(t.importe.toString()).toFixed(4), moneda)}
                     </p>
                   </div>
                 ))}
-                <p className="text-xs text-[#6B6B6F] text-center">
+                <p className="text-xs text-fg-muted text-center">
                   Cuando se realice la transferencia real, usa "Registrar liquidación" para actualizar el balance.
                 </p>
                 <button
@@ -283,9 +283,9 @@ export function GrupoDetalle({ grupoId, onBack }: Props) {
                         importe: primera.importe.toString(),
                         moneda,
                       });
-                      toast.success("Liquidación registrada (pendiente de confirmar)");
+                      showFlash("Liquidación registrada (pendiente de confirmar)");
                       setShowSaldar(false);
-                    } catch { toast.error("Error"); }
+                    } catch { showFlash("Error", "error"); }
                   }}
                   className="w-full bg-ink text-white rounded-2xl py-3 font-semibold text-sm"
                 >

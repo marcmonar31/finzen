@@ -2,7 +2,7 @@ import hashlib
 from typing import List
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException
-from sqlmodel import Session, select
+from sqlmodel import Session, select, func
 from database import get_session
 from models.cuenta import Cuenta
 from models.movimiento import Movimiento
@@ -19,6 +19,12 @@ router = APIRouter(prefix="/cuentas", tags=["cuentas"])
 def _enrich(cuenta: Cuenta, session: Session) -> CuentaOut:
     out = CuentaOut.model_validate(cuenta)
     out.saldo = saldo_cuenta(cuenta.id, session)
+    out.num_movimientos = session.exec(
+        select(func.count()).where(
+            Movimiento.cuenta_id == cuenta.id,
+            Movimiento.archivado_en.is_(None),  # type: ignore[union-attr]
+        )
+    ).one()
     return out
 
 
@@ -108,6 +114,17 @@ def archivar_cuenta(
     cuenta = session.get(Cuenta, cuenta_id)
     if not cuenta or cuenta.workspace_id != workspace.id:
         raise HTTPException(404, "Cuenta no encontrada")
-    cuenta.archivado_en = datetime.utcnow()
+    now = datetime.utcnow()
+    # Cascade: archive all active movements linked to this account
+    movimientos = session.exec(
+        select(Movimiento).where(
+            Movimiento.cuenta_id == cuenta_id,
+            Movimiento.archivado_en.is_(None),  # type: ignore[union-attr]
+        )
+    ).all()
+    for mov in movimientos:
+        mov.archivado_en = now
+        session.add(mov)
+    cuenta.archivado_en = now
     session.add(cuenta)
     session.commit()

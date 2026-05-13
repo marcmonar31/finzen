@@ -4,7 +4,7 @@
  */
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { toast } from "sonner";
+import { showFlash } from "@/stores/flash";
 
 export default function Auth() {
   const [loading, setLoading] = useState(false);
@@ -19,7 +19,7 @@ export default function Auth() {
       },
     });
     if (error) {
-      toast.error(error.message);
+      showFlash(error.message, "error");
       setLoading(false);
     }
     // Si ok, Supabase redirige automáticamente
@@ -30,7 +30,7 @@ export default function Auth() {
     setLoading(true);
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
-      toast.error(error.message);
+      showFlash(error.message, "error");
       setLoading(false);
     }
   }
@@ -44,9 +44,9 @@ export default function Auth() {
       options: { emailRedirectTo: window.location.origin },
     });
     if (error) {
-      toast.error(error.message);
+      showFlash(error.message, "error");
     } else {
-      toast.success("Revisa tu email para confirmar el registro");
+      showFlash("Revisa tu email para confirmar el registro");
     }
     setLoading(false);
   }
@@ -91,7 +91,7 @@ function AuthScreen({
         </div>
 
         {/* Tab selector */}
-        <div className="flex bg-white rounded-2xl p-1 shadow-sm mb-6">
+        <div className="flex bg-surface rounded-2xl p-1 shadow-sm mb-6">
           {(["login", "register"] as const).map((t) => (
             <button
               key={t}
@@ -110,7 +110,7 @@ function AuthScreen({
           <button
             onClick={onGoogleLogin}
             disabled={loading}
-            className="w-full flex items-center justify-center gap-3 bg-white border border-gray-200 rounded-2xl py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 shadow-sm"
+            className="w-full flex items-center justify-center gap-3 bg-surface border border-gray-200 rounded-2xl py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 shadow-sm"
           >
             <svg viewBox="0 0 24 24" width="18" height="18">
               <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -133,14 +133,14 @@ function AuthScreen({
             placeholder="tu@email.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full border border-gray-200 rounded-2xl px-4 py-3 text-sm bg-white"
+            className="w-full border border-gray-200 rounded-2xl px-4 py-3 text-sm bg-surface"
           />
           <input
             type="password"
             placeholder="Contraseña"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full border border-gray-200 rounded-2xl px-4 py-3 text-sm bg-white"
+            className="w-full border border-gray-200 rounded-2xl px-4 py-3 text-sm bg-surface"
           />
 
           <button

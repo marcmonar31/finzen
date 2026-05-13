@@ -4,6 +4,14 @@ export interface Usuario {
   nombre: string;
   email: string | null;
   avatar_emoji: string;
+  avatar_color: string;
+  foto_data: string | null;
+  ocultar_importes: boolean;
+  tema: "claro" | "oscuro";
+  idioma: "es" | "en" | "uk";
+  formato_fecha: string;
+  primer_dia_mes: number;
+  primer_dia_semana: string;
   creado_en: string;
 }
 
@@ -36,6 +44,7 @@ export interface Cuenta {
   archivado_en: string | null;
   creado_en: string;
   saldo: string | null;
+  num_movimientos: number;
 }
 
 export interface Categoria {
@@ -75,6 +84,8 @@ export interface Movimiento {
   actualizado_en: string;
   categoria_emoji: string | null;
   categoria_nombre: string | null;
+  cuenta_nombre: string | null;
+  cuenta_contraparte_nombre: string | null;
 }
 
 export interface Transferencia {

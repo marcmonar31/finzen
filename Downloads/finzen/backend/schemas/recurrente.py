@@ -4,7 +4,7 @@ from typing import Optional
 from pydantic import BaseModel, ConfigDict, field_validator
 
 
-FRECUENCIAS = ("diario", "semanal", "mensual", "anual")
+FRECUENCIAS = ("diario", "semanal", "cada_4_semanas", "mensual", "anual")
 TIPOS = ("ingreso", "gasto")
 
 
@@ -55,9 +55,17 @@ class RecurrenteUpdate(BaseModel):
     moneda: Optional[str] = None
     cuenta_id: Optional[str] = None
     categoria_id: Optional[str] = None
+    frecuencia: Optional[str] = None
     dia_mes: Optional[int] = None
     activo: Optional[bool] = None
     notas: Optional[str] = None
+
+    @field_validator("frecuencia")
+    @classmethod
+    def frecuencia_valida(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None and v not in FRECUENCIAS:
+            raise ValueError(f"frecuencia debe ser una de {FRECUENCIAS}")
+        return v
 
 
 class RecurrenteOut(BaseModel):

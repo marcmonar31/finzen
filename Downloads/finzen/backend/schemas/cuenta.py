@@ -59,3 +59,4 @@ class CuentaOut(BaseModel):
     archivado_en: Optional[datetime]
     creado_en: datetime
     saldo: Optional[Decimal] = None
+    num_movimientos: int = 0

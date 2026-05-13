@@ -48,7 +48,7 @@ export function useArchivarObjetivo() {
 export function useAportar(objetivoId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (body: { importe: string; moneda?: string; fecha: string; concepto?: string }) =>
+    mutationFn: (body: { importe: string; moneda?: string; fecha: string; cuenta_id: string; concepto?: string }) =>
       api.post(`/objetivos/${objetivoId}/aportaciones`, body),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["objetivos"] });
