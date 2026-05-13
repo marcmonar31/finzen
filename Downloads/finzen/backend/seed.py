@@ -41,7 +41,6 @@ def seed():
                 (Workspace(nombre="Personal Martín", emoji="🏠", moneda_base="EUR", owner_id=martin.id), martin.id),
                 (Workspace(nombre="Personal María", emoji="🌸", moneda_base="EUR", owner_id=maria.id), maria.id),
                 (Workspace(nombre="Personal Pedro", emoji="⚡", moneda_base="EUR", owner_id=pedro.id), pedro.id),
-                (Workspace(nombre="Familia García", emoji="👨‍👩‍👧", moneda_base="EUR", owner_id=martin.id), martin.id),
             ]
 
             workspaces = []
@@ -50,15 +49,12 @@ def seed():
                 workspaces.append(ws)
             session.flush()
 
-            ws_martin, ws_maria, ws_pedro, ws_familia = workspaces
+            ws_martin, ws_maria, ws_pedro = workspaces
 
             membresias = [
                 WorkspaceMiembro(workspace_id=ws_martin.id, usuario_id=martin.id, rol="owner"),
                 WorkspaceMiembro(workspace_id=ws_maria.id, usuario_id=maria.id, rol="owner"),
                 WorkspaceMiembro(workspace_id=ws_pedro.id, usuario_id=pedro.id, rol="owner"),
-                WorkspaceMiembro(workspace_id=ws_familia.id, usuario_id=martin.id, rol="owner"),
-                WorkspaceMiembro(workspace_id=ws_familia.id, usuario_id=maria.id, rol="editor"),
-                WorkspaceMiembro(workspace_id=ws_familia.id, usuario_id=pedro.id, rol="editor"),
             ]
             for m in membresias:
                 session.add(m)

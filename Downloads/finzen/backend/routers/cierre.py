@@ -4,7 +4,7 @@ from datetime import date
 from decimal import Decimal
 from typing import Optional
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, select
 
 from database import get_session
@@ -24,6 +24,10 @@ def cierre_mensual(
     session: Session = Depends(get_session),
 ):
     """Resumen financiero de un mes: ingresos, gastos, balance, top categorías."""
+    if mes < 1 or mes > 12:
+        raise HTTPException(400, "El mes debe estar entre 1 y 12")
+    if anio < 1900 or anio > 2100:
+        raise HTTPException(400, "El año debe estar entre 1900 y 2100")
     fecha_inicio = date(anio, mes, 1)
     ultimo_dia = monthrange(anio, mes)[1]
     fecha_fin = date(anio, mes, ultimo_dia)

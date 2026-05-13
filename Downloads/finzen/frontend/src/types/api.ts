@@ -287,6 +287,15 @@ export interface AportacionOut {
   creado_en: string;
 }
 
+export interface PagoAnticipadoOut {
+  id: string;
+  deuda_id: string;
+  fecha: string;
+  importe: string;
+  notas: string | null;
+  creado_en: string;
+}
+
 export interface DeudaOut {
   id: string;
   workspace_id: string;

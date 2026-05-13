@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Camera, Upload, Trash2, Eye, EyeOff, Check } from "lucide-react";
+import { X, Upload, Trash2, Eye, EyeOff, Check } from "lucide-react";
 import { showFlash } from "@/stores/flash";
 import { useActualizarUsuario } from "@/hooks/useUsuario";
 import type { Usuario } from "@/types/api";
@@ -402,6 +402,32 @@ export function EditarEmailSheet({ open, onClose, usuario }: {
 
 // ── Cambiar contraseña ────────────────────────────────────────────────────────
 
+function InputPwd({
+  value, onChange, show, onToggle, placeholder,
+}: {
+  value: string; onChange: (v: string) => void;
+  show: boolean; onToggle: () => void; placeholder: string;
+}) {
+  return (
+    <div className="relative">
+      <input
+        type={show ? "text" : "password"}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="w-full bg-surface-2 rounded-xl px-4 py-3 pr-11 text-sm text-fg placeholder:text-fg-subtle focus:outline-none focus:ring-2 focus:ring-ink/20"
+      />
+      <button
+        type="button"
+        onClick={onToggle}
+        className="absolute right-3 top-1/2 -translate-y-1/2 text-fg-subtle"
+      >
+        {show ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+      </button>
+    </div>
+  );
+}
+
 function calcularFortaleza(pwd: string): { nivel: number; label: string; color: string } {
   let score = 0;
   if (pwd.length >= 8)  score++;
@@ -432,30 +458,6 @@ export function CambiarContrasenaSheet({ open, onClose }: { open: boolean; onClo
     // Cuando se active Supabase auth, aquí irá supabase.auth.updateUser({ password: nueva })
     showFlash("La contraseña se podrá cambiar cuando actives la autenticación real", "error");
   }
-
-  const InputPwd = ({
-    value, onChange, show, onToggle, placeholder,
-  }: {
-    value: string; onChange: (v: string) => void;
-    show: boolean; onToggle: () => void; placeholder: string;
-  }) => (
-    <div className="relative">
-      <input
-        type={show ? "text" : "password"}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        className="w-full bg-surface-2 rounded-xl px-4 py-3 pr-11 text-sm text-fg placeholder:text-fg-subtle focus:outline-none focus:ring-2 focus:ring-ink/20"
-      />
-      <button
-        type="button"
-        onClick={onToggle}
-        className="absolute right-3 top-1/2 -translate-y-1/2 text-fg-subtle"
-      >
-        {show ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-      </button>
-    </div>
-  );
 
   return (
     <Sheet open={open} onClose={onClose} title="Cambiar contraseña">

@@ -3,7 +3,7 @@ from datetime import date, datetime
 from decimal import Decimal
 from typing import Optional, Tuple
 from fastapi import HTTPException
-from sqlmodel import Session
+from sqlmodel import Session, select
 
 from models.movimiento import Movimiento
 from models.transferencia import Transferencia
@@ -62,9 +62,22 @@ def crear_transferencia(
         importe_dest_calc, cuenta_dest.moneda, workspace_moneda_base, fecha, session
     )
 
-    def _hash(cuenta_id: str, importe: Decimal) -> str:
-        raw = f"{workspace_id}|{cuenta_id}|{fecha.isoformat()}|{importe}|{concepto}"
+    def _hash(cuenta_id: str, tipo: str, importe: Decimal) -> str:
+        raw = f"{workspace_id}|{cuenta_id}|{tipo}|{fecha.isoformat()}|{importe}|{concepto}"
         return hashlib.sha256(raw.encode()).hexdigest()
+
+    hash_orig = _hash(cuenta_origen_id, "transferencia_origen", importe_origen)
+    hash_dest = _hash(cuenta_destino_id, "transferencia_destino", importe_dest_calc)
+
+    for h in (hash_orig, hash_dest):
+        existente = session.exec(
+            select(Movimiento).where(
+                Movimiento.hash_idempotencia == h,
+                Movimiento.archivado_en.is_(None),  # type: ignore[union-attr]
+            )
+        ).first()
+        if existente:
+            raise HTTPException(409, "Transferencia duplicada (hash de idempotencia coincide)")
 
     mov_orig = Movimiento(
         workspace_id=workspace_id,
@@ -77,7 +90,7 @@ def crear_transferencia(
         fecha=fecha,
         concepto=concepto,
         notas=notas,
-        hash_idempotencia=_hash(cuenta_origen_id, importe_origen),
+        hash_idempotencia=hash_orig,
         fuente="manual",
         estado="confirmado",
         creado_por=usuario_id,
@@ -94,7 +107,7 @@ def crear_transferencia(
         fecha=fecha,
         concepto=concepto,
         notas=notas,
-        hash_idempotencia=_hash(cuenta_destino_id, importe_dest_calc),
+        hash_idempotencia=hash_dest,
         fuente="manual",
         estado="confirmado",
         creado_por=usuario_id,

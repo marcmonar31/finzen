@@ -21,6 +21,7 @@ export function CurrencyInput({ value, onChange, onBlur, placeholder, className 
   const [display, setDisplay] = useState(() => toDisplay(value));
 
   useEffect(() => {
+    /* eslint-disable-next-line react-hooks/set-state-in-effect */
     setDisplay(toDisplay(value));
   }, [value]);
 

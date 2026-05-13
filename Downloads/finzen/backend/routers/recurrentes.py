@@ -76,10 +76,24 @@ def actualizar(
     session: Session = Depends(get_session),
 ):
     rec = session.get(Recurrente, rec_id)
-    if not rec or rec.workspace_id != workspace.id:
+    if not rec or rec.workspace_id != workspace.id or rec.archivado_en:
         raise HTTPException(404, "Recurrente no encontrado")
 
-    for campo, valor in body.model_dump(exclude_unset=True).items():
+    datos = body.model_dump(exclude_unset=True)
+
+    if "cuenta_id" in datos:
+        cuenta = session.get(Cuenta, datos["cuenta_id"])
+        if not cuenta or cuenta.workspace_id != workspace.id:
+            raise HTTPException(400, "Cuenta no válida")
+        if cuenta.archivado_en:
+            raise HTTPException(400, "La cuenta está archivada")
+
+    if "categoria_id" in datos and datos["categoria_id"] is not None:
+        cat = session.get(Categoria, datos["categoria_id"])
+        if not cat or cat.workspace_id != workspace.id:
+            raise HTTPException(400, "Categoría no válida")
+
+    for campo, valor in datos.items():
         setattr(rec, campo, valor)
 
     session.add(rec)
@@ -99,7 +113,7 @@ def ejecutar_manualmente(
     from services.conversion import convertir
 
     rec = session.get(Recurrente, rec_id)
-    if not rec or rec.workspace_id != workspace.id:
+    if not rec or rec.workspace_id != workspace.id or rec.archivado_en:
         raise HTTPException(404, "Recurrente no encontrado")
     if not rec.activo:
         raise HTTPException(400, "El recurrente está pausado")
@@ -143,7 +157,7 @@ def archivar(
     session: Session = Depends(get_session),
 ):
     rec = session.get(Recurrente, rec_id)
-    if not rec or rec.workspace_id != workspace.id:
+    if not rec or rec.workspace_id != workspace.id or rec.archivado_en:
         raise HTTPException(404, "Recurrente no encontrado")
     rec.archivado_en = datetime.utcnow()
     session.add(rec)

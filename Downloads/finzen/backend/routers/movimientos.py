@@ -19,8 +19,8 @@ from services.conversion import convertir
 router = APIRouter(prefix="/movimientos", tags=["movimientos"])
 
 
-def _hash(workspace_id: str, cuenta_id: str, fecha: date, importe: Decimal, concepto: str) -> str:
-    raw = f"{workspace_id}|{cuenta_id}|{fecha.isoformat()}|{importe}|{concepto}"
+def _hash(workspace_id: str, cuenta_id: str, tipo: str, fecha: date, importe: Decimal, concepto: str) -> str:
+    raw = f"{workspace_id}|{cuenta_id}|{tipo}|{fecha.isoformat()}|{importe}|{concepto}"
     return hashlib.sha256(raw.encode()).hexdigest()
 
 
@@ -59,8 +59,8 @@ def listar(
     busqueda: Optional[str] = Query(None),
     fecha_desde: Optional[date] = Query(None),
     fecha_hasta: Optional[date] = Query(None),
-    limit: int = Query(50, le=200),
-    offset: int = Query(0),
+    limit: int = Query(50, ge=1, le=200),
+    offset: int = Query(0, ge=0),
     workspace: Workspace = Depends(get_current_workspace),
     session: Session = Depends(get_session),
 ):
@@ -104,9 +104,12 @@ def crear(
         if not cat or cat.workspace_id != workspace.id:
             raise HTTPException(400, "Categoría no encontrada")
 
-    hash_idempotencia = _hash(workspace.id, body.cuenta_id, body.fecha, body.importe, body.concepto)
+    hash_idempotencia = _hash(workspace.id, body.cuenta_id, body.tipo, body.fecha, body.importe, body.concepto)
     existente = session.exec(
-        select(Movimiento).where(Movimiento.hash_idempotencia == hash_idempotencia)
+        select(Movimiento).where(
+            Movimiento.hash_idempotencia == hash_idempotencia,
+            Movimiento.archivado_en.is_(None),  # type: ignore[union-attr]
+        )
     ).first()
     if existente:
         raise HTTPException(409, "Movimiento duplicado (hash de idempotencia coincide)")
@@ -181,6 +184,12 @@ def actualizar(
         setattr(mov, campo, valor)
     mov.actualizado_en = datetime.utcnow()
 
+    # Recalcular importe_base y tasa_cambio si cambia importe o moneda
+    if "importe" in datos or "moneda" in datos:
+        importe_base, tasa = convertir(mov.importe, mov.moneda, workspace.moneda_base, mov.fecha, session)
+        mov.importe_base = importe_base
+        mov.tasa_cambio = tasa
+
     if etiqueta_ids is not None:
         session.exec(
             select(MovimientoEtiqueta).where(MovimientoEtiqueta.movimiento_id == mov_id)
@@ -206,6 +215,7 @@ def archivar(
     if not mov or mov.workspace_id != workspace.id:
         raise HTTPException(404, "Movimiento no encontrado")
     mov.archivado_en = datetime.utcnow()
+    mov.hash_idempotencia = None  # liberar el slot para permitir re-creación futura
     session.add(mov)
     session.commit()
 

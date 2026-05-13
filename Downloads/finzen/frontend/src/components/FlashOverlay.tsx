@@ -30,7 +30,7 @@ export function FlashOverlay() {
             animate={{ scale: 1,    opacity: 1 }}
             exit={{    scale: 0.75, opacity: 0 }}
             transition={{ type: "spring", damping: 22, stiffness: 320 }}
-            className="bg-surface rounded-3xl flex flex-col items-center gap-4 px-10 py-8 min-w-[200px] max-w-[280px]"
+            className="bg-[#1a1a1a] rounded-3xl flex flex-col items-center gap-4 px-10 py-8 min-w-[200px] max-w-[280px] border border-white/8"
           >
             {/* Animated check SVG */}
             <motion.svg
@@ -60,7 +60,7 @@ export function FlashOverlay() {
               />
             </motion.svg>
 
-            <p className="text-fg font-semibold text-sm text-center leading-snug">
+            <p className="text-white font-semibold text-sm text-center leading-snug">
               {message}
             </p>
           </motion.div>

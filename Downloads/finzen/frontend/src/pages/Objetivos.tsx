@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useIsDesktop } from "@/hooks/useIsDesktop";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Target, ChevronDown, PiggyBank, Pencil, Trash2 } from "lucide-react";
@@ -176,6 +177,7 @@ function ObjetivoSheet({ onClose, objetivo }: { onClose: () => void; objetivo?: 
 
   useEffect(() => {
     if (objetivo) {
+      /* eslint-disable-next-line react-hooks/set-state-in-effect */
       setNombre(objetivo.nombre);
       setIcono(objetivo.emoji && ICON_MAP[objetivo.emoji] ? objetivo.emoji : "target");
       setImporte(String(parseFloat(objetivo.importe_objetivo)));
@@ -314,14 +316,7 @@ function ObjetivoItem({
   const pct      = objetivo.porcentaje;
   const barColor = pct >= 100 ? "bg-[#5BAA1F]" : pct >= 60 ? "bg-[#5BAA1F]" : "bg-ink";
 
-  const [isDesktop, setIsDesktop] = useState(false);
-  useEffect(() => {
-    const mq = window.matchMedia("(min-width: 768px)");
-    setIsDesktop(mq.matches);
-    const handler = (e: MediaQueryListEvent) => setIsDesktop(e.matches);
-    mq.addEventListener("change", handler);
-    return () => mq.removeEventListener("change", handler);
-  }, []);
+  const isDesktop = useIsDesktop();
 
   const wrapRef    = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);

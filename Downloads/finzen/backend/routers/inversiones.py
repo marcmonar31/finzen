@@ -3,7 +3,7 @@ from decimal import Decimal
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from sqlmodel import Session, select
 
 from database import get_session
@@ -16,6 +16,10 @@ from services.precios_inversion import obtener_precio
 
 router = APIRouter(prefix="/inversiones", tags=["inversiones"])
 
+_MAX_CANTIDAD = Decimal("999999999999.99999999")
+_MAX_PRECIO = Decimal("99999999999999.9999")
+TIPOS_ACTIVO = ("accion", "etf", "cripto", "materia_prima", "fondo")
+
 
 # ── Schemas ────────────────────────────────────────────────────────────────────
 
@@ -25,6 +29,33 @@ class ActivoCreate(BaseModel):
     tipo: str = "accion"
     moneda: str = "USD"
 
+    @field_validator("ticker")
+    @classmethod
+    def ticker_valido(cls, v: str) -> str:
+        stripped = v.strip()
+        if not stripped:
+            raise ValueError("El ticker no puede estar vacío")
+        if len(stripped) > 20:
+            raise ValueError("El ticker no puede superar 20 caracteres")
+        return stripped.upper()
+
+    @field_validator("nombre")
+    @classmethod
+    def nombre_valido(cls, v: str) -> str:
+        stripped = v.strip()
+        if not stripped:
+            raise ValueError("El nombre no puede estar vacío")
+        if len(stripped) > 200:
+            raise ValueError("El nombre no puede superar 200 caracteres")
+        return stripped
+
+    @field_validator("tipo")
+    @classmethod
+    def tipo_valido(cls, v: str) -> str:
+        if v not in TIPOS_ACTIVO:
+            raise ValueError(f"tipo debe ser uno de {TIPOS_ACTIVO}")
+        return v
+
 
 class PosicionCreate(BaseModel):
     activo_id: str
@@ -33,11 +64,49 @@ class PosicionCreate(BaseModel):
     moneda: str = "USD"
     cuenta_id: Optional[str] = None
 
+    @field_validator("cantidad")
+    @classmethod
+    def cantidad_valida(cls, v: Decimal) -> Decimal:
+        if v <= 0:
+            raise ValueError("La cantidad debe ser mayor que 0")
+        if v > _MAX_CANTIDAD:
+            raise ValueError(f"La cantidad no puede superar {_MAX_CANTIDAD}")
+        return v
+
+    @field_validator("precio_medio")
+    @classmethod
+    def precio_valido(cls, v: Decimal) -> Decimal:
+        if v <= 0:
+            raise ValueError("El precio_medio debe ser mayor que 0")
+        if v > _MAX_PRECIO:
+            raise ValueError(f"El precio_medio no puede superar {_MAX_PRECIO}")
+        return v
+
 
 class PosicionUpdate(BaseModel):
     cantidad: Optional[Decimal] = None
     precio_medio: Optional[Decimal] = None
     activa: Optional[bool] = None
+
+    @field_validator("cantidad")
+    @classmethod
+    def cantidad_valida(cls, v: Optional[Decimal]) -> Optional[Decimal]:
+        if v is not None:
+            if v <= 0:
+                raise ValueError("La cantidad debe ser mayor que 0")
+            if v > _MAX_CANTIDAD:
+                raise ValueError(f"La cantidad no puede superar {_MAX_CANTIDAD}")
+        return v
+
+    @field_validator("precio_medio")
+    @classmethod
+    def precio_valido(cls, v: Optional[Decimal]) -> Optional[Decimal]:
+        if v is not None:
+            if v <= 0:
+                raise ValueError("El precio_medio debe ser mayor que 0")
+            if v > _MAX_PRECIO:
+                raise ValueError(f"El precio_medio no puede superar {_MAX_PRECIO}")
+        return v
 
 
 # ── Activos ────────────────────────────────────────────────────────────────────
@@ -62,7 +131,7 @@ def crear_activo(
 ):
     activo = Activo(
         workspace_id=workspace.id,
-        ticker=body.ticker.upper(),
+        ticker=body.ticker,
         nombre=body.nombre,
         tipo=body.tipo,
         moneda=body.moneda,

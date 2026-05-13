@@ -10,7 +10,7 @@ import { showFlash } from "@/stores/flash";
 import { clsx } from "clsx";
 import { CurrencyInput } from "@/components/CurrencyInput";
 import { useWorkspaceStore } from "@/stores/workspace";
-import { AppIcon, ICON_LIST, ICON_MAP } from "@/components/AppIcon";
+import { ICON_LIST, ICON_MAP } from "@/components/AppIcon";
 
 const TIPOS_IDS = [
   { id: "corriente",       Icon: Building2  },

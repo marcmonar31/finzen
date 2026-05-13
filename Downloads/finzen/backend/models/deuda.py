@@ -26,3 +26,14 @@ class Deuda(SQLModel, table=True):
     creado_por: str
     creado_en: datetime = Field(default_factory=datetime.utcnow)
     archivado_en: Optional[datetime] = None
+
+
+class PagoAnticipado(SQLModel, table=True):
+    __tablename__ = "pagos_anticipados"
+
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()), primary_key=True)
+    deuda_id: str = Field(foreign_key="deudas.id", index=True)
+    fecha: date
+    importe: Decimal = Field(sa_column=Column(Numeric(18, 4)))
+    notas: Optional[str] = None
+    creado_en: datetime = Field(default_factory=datetime.utcnow)

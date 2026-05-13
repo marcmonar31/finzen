@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import {
   Home, CreditCard, ClipboardList, ArrowLeftRight, BarChart3,
   Repeat, Target, Zap, Users, Handshake, Banknote,
-  TrendingUp, Lightbulb, type LucideIcon,
+  TrendingUp, Lightbulb, Tag, type LucideIcon,
 } from "lucide-react";
 
 const SECTION_IDS: { id: string; key: string; Icon: LucideIcon; beta?: boolean }[] = [
@@ -14,13 +14,14 @@ const SECTION_IDS: { id: string; key: string; Icon: LucideIcon; beta?: boolean }
   { id: "movimientos",    key: "nav.movimientos",    Icon: ClipboardList },
   { id: "transferencias", key: "nav.transferencias", Icon: ArrowLeftRight },
   { id: "presupuestos",   key: "nav.presupuestos",   Icon: BarChart3 },
+  { id: "categorias",    key: "nav.categorias",     Icon: Tag },
   { id: "recurrentes",    key: "nav.recurrentes",    Icon: Repeat },
   { id: "objetivos",      key: "nav.objetivos",      Icon: Target },
   { id: "reglas",         key: "nav.reglas",         Icon: Zap },
   { id: "amigos",         key: "nav.amigos",         Icon: Users,       beta: true },
   { id: "grupos",         key: "nav.grupos",         Icon: Handshake,   beta: true },
   { id: "deudas",         key: "nav.deudas",         Icon: Banknote },
-  { id: "inversiones",    key: "nav.inversiones",    Icon: TrendingUp },
+  { id: "inversiones",    key: "nav.inversiones",    Icon: TrendingUp,  beta: true },
   { id: "insights",       key: "nav.insights",       Icon: Lightbulb },
 ];
 
@@ -179,6 +180,7 @@ export function MinimizableShell({ children, currentSection, onSectionChange }: 
     selIdxRef.current = currentIdx;
     velRef.current    = 0;
     lastX.current     = clientX;
+    // eslint-disable-next-line react-hooks/purity
     lastT.current     = performance.now();
 
     setIsOpen(true);
@@ -193,6 +195,7 @@ export function MinimizableShell({ children, currentSection, onSectionChange }: 
     startX.current = e.clientX;
     startY.current = e.clientY;
     lastX.current  = e.clientX;
+    // eslint-disable-next-line react-hooks/purity
     lastT.current  = performance.now();
     velRef.current = 0;
     longFired.current = false;
@@ -212,6 +215,7 @@ export function MinimizableShell({ children, currentSection, onSectionChange }: 
       return;
     }
 
+    // eslint-disable-next-line react-hooks/purity
     const now = performance.now();
     const dt  = now - lastT.current;
     const dx  = e.clientX - lastX.current;

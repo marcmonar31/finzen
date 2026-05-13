@@ -1,4 +1,5 @@
-import React, { useRef, useState, useEffect } from "react";
+import React, { useRef, useState } from "react";
+import { useIsDesktop } from "@/hooks/useIsDesktop";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Pause, Play, Pencil, Trash2, ArrowDownLeft, ArrowUpRight, RefreshCw } from "lucide-react";
@@ -64,14 +65,7 @@ export function RecurrenteItem({ recurrente: r, onEdit, onToggle, onDelete }: Pr
   const { t } = useTranslation();
   const discreto = useUsuarioStore((s) => s.usuario?.ocultar_importes ?? false);
 
-  const [isDesktop, setIsDesktop] = useState(false);
-  useEffect(() => {
-    const mq = window.matchMedia("(min-width: 768px)");
-    setIsDesktop(mq.matches);
-    const handler = (e: MediaQueryListEvent) => setIsDesktop(e.matches);
-    mq.addEventListener("change", handler);
-    return () => mq.removeEventListener("change", handler);
-  }, []);
+  const isDesktop = useIsDesktop();
 
   const wrapRef    = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);

@@ -300,6 +300,7 @@ function EditarGrupoModal({ open, onClose, grupoId, onDeleted }: {
 
   useEffect(() => {
     if (grupo && open) {
+      /* eslint-disable-next-line react-hooks/set-state-in-effect */
       setNombre(grupo.nombre);
       setIcon(grupo.emoji ?? "handshake");
       setConfirmDestruc(false);

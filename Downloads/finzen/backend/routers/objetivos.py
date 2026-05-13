@@ -8,6 +8,7 @@ from sqlmodel import Session, select
 from database import get_session
 from deps import get_current_user, get_current_workspace
 from models.objetivo import Objetivo, ObjetivoAportacion
+from models.cuenta import Cuenta
 from models.usuario import Usuario
 from models.workspace import Workspace
 from schemas.objetivo import AportacionCreate, AportacionOut, ObjetivoCreate, ObjetivoOut, ObjetivoUpdate
@@ -43,6 +44,11 @@ def crear(
     workspace: Workspace = Depends(get_current_workspace),
     session: Session = Depends(get_session),
 ):
+    if body.cuenta_id:
+        cuenta = session.get(Cuenta, body.cuenta_id)
+        if not cuenta or cuenta.workspace_id != workspace.id:
+            raise HTTPException(400, "Cuenta no válida")
+
     obj = Objetivo(
         workspace_id=workspace.id,
         creado_por=current_user.id,
@@ -62,9 +68,16 @@ def actualizar(
     session: Session = Depends(get_session),
 ):
     obj = session.get(Objetivo, obj_id)
-    if not obj or obj.workspace_id != workspace.id:
+    if not obj or obj.workspace_id != workspace.id or obj.archivado_en:
         raise HTTPException(404, "Objetivo no encontrado")
-    for campo, valor in body.model_dump(exclude_unset=True).items():
+
+    datos = body.model_dump(exclude_unset=True)
+    if "cuenta_id" in datos and datos["cuenta_id"] is not None:
+        cuenta = session.get(Cuenta, datos["cuenta_id"])
+        if not cuenta or cuenta.workspace_id != workspace.id:
+            raise HTTPException(400, "Cuenta no válida")
+
+    for campo, valor in datos.items():
         setattr(obj, campo, valor)
     session.add(obj)
     session.commit()
@@ -79,7 +92,7 @@ def archivar(
     session: Session = Depends(get_session),
 ):
     obj = session.get(Objetivo, obj_id)
-    if not obj or obj.workspace_id != workspace.id:
+    if not obj or obj.workspace_id != workspace.id or obj.archivado_en:
         raise HTTPException(404, "Objetivo no encontrado")
     obj.archivado_en = datetime.utcnow()
     session.add(obj)
@@ -94,8 +107,13 @@ def aportar(
     session: Session = Depends(get_session),
 ):
     obj = session.get(Objetivo, obj_id)
-    if not obj or obj.workspace_id != workspace.id:
+    if not obj or obj.workspace_id != workspace.id or obj.archivado_en:
         raise HTTPException(404, "Objetivo no encontrado")
+
+    cuenta = session.get(Cuenta, body.cuenta_id)
+    if not cuenta or cuenta.workspace_id != workspace.id:
+        raise HTTPException(400, "Cuenta no válida")
+
     aportacion = ObjetivoAportacion(
         objetivo_id=obj_id,
         workspace_id=workspace.id,

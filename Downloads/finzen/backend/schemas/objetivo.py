@@ -1,27 +1,76 @@
 from datetime import date, datetime
 from decimal import Decimal
 from typing import Any, List, Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, field_validator
+from schemas.validators import validar_moneda
+
+_MAX_IMPORTE = Decimal("99999999999999.9999")
+
+
+def _validar_nombre(v: str) -> str:
+    stripped = v.strip()
+    if not stripped:
+        raise ValueError("El nombre no puede estar vacío")
+    if len(stripped) > 200:
+        raise ValueError("El nombre no puede superar 200 caracteres")
+    return stripped
+
+
+def _validar_importe(v: Decimal) -> Decimal:
+    if v <= 0:
+        raise ValueError("El importe debe ser mayor que 0")
+    if v > _MAX_IMPORTE:
+        raise ValueError(f"El importe no puede superar {_MAX_IMPORTE}")
+    return v
 
 
 class ObjetivoCreate(BaseModel):
     nombre: str
-    descripcion: Optional[str] = None
-    emoji: str = "🎯"
+    descripcion: Optional[str] = Field(default=None, max_length=500)
+    emoji: str = Field(default="🎯", max_length=10)
     importe_objetivo: Decimal
     moneda: str = "EUR"
     fecha_objetivo: Optional[date] = None
     cuenta_id: Optional[str] = None
 
+    @field_validator("nombre")
+    @classmethod
+    def nombre_valido(cls, v: str) -> str:
+        return _validar_nombre(v)
+
+    @field_validator("importe_objetivo")
+    @classmethod
+    def importe_valido(cls, v: Decimal) -> Decimal:
+        return _validar_importe(v)
+
+    @field_validator("moneda")
+    @classmethod
+    def moneda_valida(cls, v: str) -> str:
+        return validar_moneda(v)
+
 
 class ObjetivoUpdate(BaseModel):
     nombre: Optional[str] = None
-    descripcion: Optional[str] = None
-    emoji: Optional[str] = None
+    descripcion: Optional[str] = Field(default=None, max_length=500)
+    emoji: Optional[str] = Field(default=None, max_length=10)
     importe_objetivo: Optional[Decimal] = None
     fecha_objetivo: Optional[date] = None
     cuenta_id: Optional[str] = None
     activo: Optional[bool] = None
+
+    @field_validator("nombre")
+    @classmethod
+    def nombre_valido(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return v
+        return _validar_nombre(v)
+
+    @field_validator("importe_objetivo")
+    @classmethod
+    def importe_valido(cls, v: Optional[Decimal]) -> Optional[Decimal]:
+        if v is None:
+            return v
+        return _validar_importe(v)
 
 
 class AportacionCreate(BaseModel):
@@ -29,8 +78,18 @@ class AportacionCreate(BaseModel):
     moneda: str = "EUR"
     fecha: date
     cuenta_id: str
-    concepto: Optional[str] = None
+    concepto: Optional[str] = Field(default=None, max_length=200)
     movimiento_id: Optional[str] = None
+
+    @field_validator("importe")
+    @classmethod
+    def importe_valido(cls, v: Decimal) -> Decimal:
+        return _validar_importe(v)
+
+    @field_validator("moneda")
+    @classmethod
+    def moneda_valida(cls, v: str) -> str:
+        return validar_moneda(v)
 
 
 class AportacionOut(BaseModel):

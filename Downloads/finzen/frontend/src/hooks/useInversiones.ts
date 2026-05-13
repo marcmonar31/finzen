@@ -47,6 +47,15 @@ export function useActualizarPrecios() {
   });
 }
 
+export function useActualizarPosicion() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ posId, ...data }: { posId: string; cantidad?: string; precio_medio?: string }) =>
+      api.patch(`/inversiones/posiciones/${posId}`, data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["cartera"] }),
+  });
+}
+
 export function useCerrarPosicion() {
   const qc = useQueryClient();
   return useMutation({

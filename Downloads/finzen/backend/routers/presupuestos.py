@@ -63,7 +63,7 @@ def estado(
     session: Session = Depends(get_session),
 ):
     p = session.get(Presupuesto, presupuesto_id)
-    if not p or p.workspace_id != workspace.id:
+    if not p or p.workspace_id != workspace.id or p.archivado_en:
         raise HTTPException(404, "Presupuesto no encontrado")
     return calcular_estado(p, session)
 
@@ -76,7 +76,7 @@ def actualizar(
     session: Session = Depends(get_session),
 ):
     p = session.get(Presupuesto, presupuesto_id)
-    if not p or p.workspace_id != workspace.id:
+    if not p or p.workspace_id != workspace.id or p.archivado_en:
         raise HTTPException(404, "Presupuesto no encontrado")
 
     datos = body.model_dump(exclude_unset=True)
@@ -101,7 +101,7 @@ def archivar(
     session: Session = Depends(get_session),
 ):
     p = session.get(Presupuesto, presupuesto_id)
-    if not p or p.workspace_id != workspace.id:
+    if not p or p.workspace_id != workspace.id or p.archivado_en:
         raise HTTPException(404, "Presupuesto no encontrado")
     p.archivado_en = datetime.utcnow()
     session.add(p)

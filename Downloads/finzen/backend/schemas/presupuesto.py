@@ -3,10 +3,30 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Optional, List, Any, Dict
 from pydantic import BaseModel, ConfigDict, field_validator
+from schemas.validators import validar_moneda
 
 
 PERIODOS = ("mensual", "semanal", "trimestral", "anual")
 MODOS = ("estricto", "flexible")
+
+_MAX_IMPORTE = Decimal("99999999999999.9999")
+
+
+def _validar_nombre(v: str) -> str:
+    stripped = v.strip()
+    if not stripped:
+        raise ValueError("El nombre no puede estar vacío")
+    if len(stripped) > 200:
+        raise ValueError("El nombre no puede superar 200 caracteres")
+    return stripped
+
+
+def _validar_importe(v: Decimal) -> Decimal:
+    if v <= 0:
+        raise ValueError("El importe debe ser mayor que 0")
+    if v > _MAX_IMPORTE:
+        raise ValueError(f"El importe no puede superar {_MAX_IMPORTE}")
+    return v
 
 
 class PresupuestoCreate(BaseModel):
@@ -18,12 +38,20 @@ class PresupuestoCreate(BaseModel):
     categoria_ids: List[str] = []
     cuenta_ids: List[str] = []
 
+    @field_validator("nombre")
+    @classmethod
+    def nombre_valido(cls, v: str) -> str:
+        return _validar_nombre(v)
+
     @field_validator("importe")
     @classmethod
-    def importe_positivo(cls, v: Decimal) -> Decimal:
-        if v <= 0:
-            raise ValueError("El importe debe ser mayor que 0")
-        return v
+    def importe_valido(cls, v: Decimal) -> Decimal:
+        return _validar_importe(v)
+
+    @field_validator("moneda")
+    @classmethod
+    def moneda_valida(cls, v: str) -> str:
+        return validar_moneda(v)
 
     @field_validator("periodo")
     @classmethod
@@ -48,6 +76,34 @@ class PresupuestoUpdate(BaseModel):
     categoria_ids: Optional[List[str]] = None
     cuenta_ids: Optional[List[str]] = None
     activo: Optional[bool] = None
+
+    @field_validator("nombre")
+    @classmethod
+    def nombre_valido(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return v
+        return _validar_nombre(v)
+
+    @field_validator("importe")
+    @classmethod
+    def importe_valido(cls, v: Optional[Decimal]) -> Optional[Decimal]:
+        if v is None:
+            return v
+        return _validar_importe(v)
+
+    @field_validator("periodo")
+    @classmethod
+    def periodo_valido(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None and v not in PERIODOS:
+            raise ValueError(f"periodo debe ser uno de {PERIODOS}")
+        return v
+
+    @field_validator("modo")
+    @classmethod
+    def modo_valido(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None and v not in MODOS:
+            raise ValueError(f"modo debe ser uno de {MODOS}")
+        return v
 
 
 class EstadoPresupuesto(BaseModel):

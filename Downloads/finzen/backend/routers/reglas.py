@@ -64,7 +64,7 @@ def actualizar_regla(
     session: Session = Depends(get_session),
 ):
     regla = session.get(Regla, regla_id)
-    if not regla or regla.workspace_id != workspace.id:
+    if not regla or regla.workspace_id != workspace.id or regla.archivado_en:
         raise HTTPException(404, "Regla no encontrada")
 
     if body.nombre is not None:
@@ -92,19 +92,18 @@ def actualizar_regla(
     return ReglaOut.from_orm(regla)
 
 
-@router.delete("/{regla_id}")
+@router.delete("/{regla_id}", status_code=204)
 def archivar_regla(
     regla_id: str,
     workspace: Workspace = Depends(get_current_workspace),
     session: Session = Depends(get_session),
 ):
     regla = session.get(Regla, regla_id)
-    if not regla or regla.workspace_id != workspace.id:
+    if not regla or regla.workspace_id != workspace.id or regla.archivado_en:
         raise HTTPException(404, "Regla no encontrada")
     regla.archivado_en = datetime.utcnow()
     session.add(regla)
     session.commit()
-    return {"ok": True}
 
 
 @router.post("/{regla_id}/simular")
@@ -115,7 +114,7 @@ def simular(
     session: Session = Depends(get_session),
 ):
     regla = session.get(Regla, regla_id)
-    if not regla or regla.workspace_id != workspace.id:
+    if not regla or regla.workspace_id != workspace.id or regla.archivado_en:
         raise HTTPException(404, "Regla no encontrada")
     resultados = simular_regla(regla, session, dias_atras)
     return {"resultados": resultados, "total_disparos": len(resultados)}

@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import {
   Building2, PiggyBank, Banknote, CreditCard, TrendingUp, Package,
   Home, Car, Plane, Wallet, Briefcase, Star, Coffee, Zap, Gift,

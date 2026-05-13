@@ -14,6 +14,7 @@ import { Cuentas } from "@/pages/Cuentas";
 import { Movimientos } from "@/pages/Movimientos";
 import { Transferencias } from "@/pages/Transferencias";
 import { Presupuestos } from "@/pages/Presupuestos";
+import { Categorias } from "@/pages/Categorias";
 import { Recurrentes } from "@/pages/Recurrentes";
 import { Amigos } from "@/pages/Amigos";
 import { Grupos } from "@/pages/Grupos";
@@ -36,6 +37,7 @@ const SECTION_PAGES: Record<string, React.ReactNode> = {
   movimientos:    <Movimientos />,
   transferencias: <Transferencias />,
   presupuestos:   <Presupuestos />,
+  categorias:     <Categorias />,
   recurrentes:    <Recurrentes />,
   objetivos:      <Objetivos />,
   reglas:         <Reglas />,

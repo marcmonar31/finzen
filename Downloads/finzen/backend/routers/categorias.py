@@ -72,7 +72,7 @@ def actualizar_categoria(
     session: Session = Depends(get_session),
 ):
     cat = session.get(Categoria, cat_id)
-    if not cat or cat.workspace_id != workspace.id:
+    if not cat or cat.workspace_id != workspace.id or cat.archivado_en:
         raise HTTPException(404, "Categoría no encontrada")
     for campo, valor in body.model_dump(exclude_unset=True).items():
         setattr(cat, campo, valor)
@@ -89,7 +89,7 @@ def archivar_categoria(
     session: Session = Depends(get_session),
 ):
     cat = session.get(Categoria, cat_id)
-    if not cat or cat.workspace_id != workspace.id:
+    if not cat or cat.workspace_id != workspace.id or cat.archivado_en:
         raise HTTPException(404, "Categoría no encontrada")
 
     movs_con_cat = session.exec(

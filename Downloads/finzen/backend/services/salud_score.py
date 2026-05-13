@@ -55,10 +55,10 @@ def calcular_salud_score(workspace_id: str, session: Session) -> Dict:
     ).all()
 
     if presupuestos:
-        from services.presupuestos_calc import calcular_estado_presupuesto
+        from services.presupuestos_calc import calcular_estado
         en_verde = sum(
             1 for p in presupuestos
-            if calcular_estado_presupuesto(p, session)["alerta"] == "ok"
+            if calcular_estado(p, session)["alerta"] == "ok"
         )
         pts_presupuestos = int(20 * en_verde / len(presupuestos))
         desc_pres = f"{en_verde}/{len(presupuestos)} presupuestos en verde"

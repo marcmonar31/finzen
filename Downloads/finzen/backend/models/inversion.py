@@ -53,7 +53,7 @@ class ModoViaje(SQLModel, table=True):
     workspace_id: str = Field(foreign_key="workspaces.id", index=True)
     nombre: str                  # "Roma 2026"
     fecha_inicio: date
-    fecha_fin: date
+    fecha_fin: Optional[date] = Field(default=None)
     etiqueta_id: Optional[str] = Field(default=None, foreign_key="etiquetas.id")
     activo: bool = True
     creado_por: str

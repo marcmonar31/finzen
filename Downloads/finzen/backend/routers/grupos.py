@@ -24,6 +24,19 @@ from services.liquidacion import calcular_balance_grupo, calcular_repartos, tran
 router = APIRouter(prefix="/grupos", tags=["grupos"])
 
 
+def _verificar_miembro(grupo_id: str, usuario_id: str, session: Session) -> GrupoMiembro:
+    miembro = session.exec(
+        select(GrupoMiembro).where(
+            GrupoMiembro.grupo_id == grupo_id,
+            GrupoMiembro.usuario_id == usuario_id,
+            GrupoMiembro.activo == True,  # noqa: E712
+        )
+    ).first()
+    if not miembro:
+        raise HTTPException(403, "No eres miembro activo de este grupo")
+    return miembro
+
+
 def _nombre_miembro(m: GrupoMiembro, session: Session) -> str:
     if m.apodo:
         return m.apodo
@@ -272,8 +285,9 @@ def añadir_miembro(
     session: Session = Depends(get_session),
 ):
     grupo = session.get(Grupo, grupo_id)
-    if not grupo:
+    if not grupo or grupo.archivado_en:
         raise HTTPException(404, "Grupo no encontrado")
+    _verificar_miembro(grupo_id, current_user.id, session)
     if not usuario_id and not externo_id:
         raise HTTPException(400, "Indica usuario_id o externo_id")
 
@@ -346,8 +360,9 @@ def balance_grupo(
     session: Session = Depends(get_session),
 ):
     grupo = session.get(Grupo, grupo_id)
-    if not grupo:
+    if not grupo or grupo.archivado_en:
         raise HTTPException(404, "Grupo no encontrado")
+    _verificar_miembro(grupo_id, current_user.id, session)
 
     balance = calcular_balance_grupo(grupo_id, session)
     sugerencias = transferencias_optimas(balance)
@@ -366,8 +381,9 @@ def crear_gasto(
     session: Session = Depends(get_session),
 ):
     grupo = session.get(Grupo, grupo_id)
-    if not grupo:
+    if not grupo or grupo.archivado_en:
         raise HTTPException(404, "Grupo no encontrado")
+    _verificar_miembro(grupo_id, current_user.id, session)
     if grupo.cerrado_en:
         raise HTTPException(400, "El grupo está cerrado")
 
@@ -492,6 +508,10 @@ def listar_gastos(
     current_user: Usuario = Depends(get_current_user),
     session: Session = Depends(get_session),
 ):
+    grupo = session.get(Grupo, grupo_id)
+    if not grupo or grupo.archivado_en:
+        raise HTTPException(404, "Grupo no encontrado")
+    _verificar_miembro(grupo_id, current_user.id, session)
     gastos = session.exec(
         select(GastoCompartido).where(
             GastoCompartido.grupo_id == grupo_id,
@@ -526,20 +546,23 @@ def listar_gastos(
     return resultado
 
 
-@router.delete("/{grupo_id}/gastos/{gasto_id}")
+@router.delete("/{grupo_id}/gastos/{gasto_id}", status_code=204)
 def archivar_gasto(
     grupo_id: str,
     gasto_id: str,
     current_user: Usuario = Depends(get_current_user),
     session: Session = Depends(get_session),
 ):
+    grupo = session.get(Grupo, grupo_id)
+    if not grupo or grupo.archivado_en:
+        raise HTTPException(404, "Grupo no encontrado")
+    _verificar_miembro(grupo_id, current_user.id, session)
     gasto = session.get(GastoCompartido, gasto_id)
-    if not gasto or gasto.grupo_id != grupo_id:
+    if not gasto or gasto.grupo_id != grupo_id or gasto.archivado_en:
         raise HTTPException(404, "Gasto no encontrado")
     gasto.archivado_en = datetime.utcnow()
     session.add(gasto)
     session.commit()
-    return {"ok": True}
 
 
 # ──────────────────────────────────────────
@@ -554,8 +577,9 @@ def registrar_liquidacion(
     session: Session = Depends(get_session),
 ):
     grupo = session.get(Grupo, grupo_id)
-    if not grupo:
+    if not grupo or grupo.archivado_en:
         raise HTTPException(404, "Grupo no encontrado")
+    _verificar_miembro(grupo_id, current_user.id, session)
 
     liq = Liquidacion(
         grupo_id=grupo_id,
@@ -634,6 +658,10 @@ def confirmar_liquidacion(
     current_user: Usuario = Depends(get_current_user),
     session: Session = Depends(get_session),
 ):
+    grupo = session.get(Grupo, grupo_id)
+    if not grupo or grupo.archivado_en:
+        raise HTTPException(404, "Grupo no encontrado")
+    _verificar_miembro(grupo_id, current_user.id, session)
     liq = session.get(Liquidacion, liq_id)
     if not liq or liq.grupo_id != grupo_id:
         raise HTTPException(404, "Liquidación no encontrada")
@@ -667,6 +695,10 @@ def listar_liquidaciones(
     current_user: Usuario = Depends(get_current_user),
     session: Session = Depends(get_session),
 ):
+    grupo = session.get(Grupo, grupo_id)
+    if not grupo or grupo.archivado_en:
+        raise HTTPException(404, "Grupo no encontrado")
+    _verificar_miembro(grupo_id, current_user.id, session)
     liqs = session.exec(
         select(Liquidacion).where(Liquidacion.grupo_id == grupo_id)
     ).all()

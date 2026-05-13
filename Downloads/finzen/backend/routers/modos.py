@@ -3,7 +3,7 @@ from datetime import date, datetime
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from sqlmodel import Session, select
 
 from database import get_session
@@ -24,6 +24,16 @@ class ModoViajeCreate(BaseModel):
     fecha_fin: Optional[date] = None
     etiqueta_id: Optional[str] = None
 
+    @field_validator("nombre")
+    @classmethod
+    def nombre_valido(cls, v: str) -> str:
+        stripped = v.strip()
+        if not stripped:
+            raise ValueError("El nombre no puede estar vacío")
+        if len(stripped) > 200:
+            raise ValueError("El nombre no puede superar 200 caracteres")
+        return stripped
+
 
 class ModoViajeUpdate(BaseModel):
     nombre: Optional[str] = None
@@ -31,6 +41,18 @@ class ModoViajeUpdate(BaseModel):
     fecha_fin: Optional[date] = None
     etiqueta_id: Optional[str] = None
     activo: Optional[bool] = None
+
+    @field_validator("nombre")
+    @classmethod
+    def nombre_valido(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return v
+        stripped = v.strip()
+        if not stripped:
+            raise ValueError("El nombre no puede estar vacío")
+        if len(stripped) > 200:
+            raise ValueError("El nombre no puede superar 200 caracteres")
+        return stripped
 
 
 class ModoEmergenciaUpdate(BaseModel):

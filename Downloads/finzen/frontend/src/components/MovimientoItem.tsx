@@ -1,4 +1,5 @@
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState } from "react";
+import { useIsDesktop } from "@/hooks/useIsDesktop";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Pencil, Trash2, ArrowLeftRight, ArrowDownLeft, ArrowUpRight } from "lucide-react";
@@ -99,14 +100,7 @@ export function MovimientoItem({ movimiento: m, monedaBase, onEdit, onDelete }: 
   const esTrans     = esTransferencia(m.tipo);
   const muestraBase = monedaBase && monedaBase !== m.moneda;
 
-  const [isDesktop, setIsDesktop] = useState(false);
-  useEffect(() => {
-    const mq = window.matchMedia("(min-width: 768px)");
-    setIsDesktop(mq.matches);
-    const handler = (e: MediaQueryListEvent) => setIsDesktop(e.matches);
-    mq.addEventListener("change", handler);
-    return () => mq.removeEventListener("change", handler);
-  }, []);
+  const isDesktop = useIsDesktop();
 
   const wrapRef    = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);

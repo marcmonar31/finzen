@@ -105,6 +105,7 @@ def archivar(
         mov = session.get(Movimiento, mov_id)
         if mov:
             mov.archivado_en = now
+            mov.hash_idempotencia = None  # liberar slot para re-creación futura
             session.add(mov)
 
     session.delete(t)

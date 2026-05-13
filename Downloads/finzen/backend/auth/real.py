@@ -88,7 +88,7 @@ def _registrar_nuevo_usuario(auth_id: str, email: Optional[str], session: Sessio
     from models.miembro import WorkspaceMiembro
     ws = Workspace(
         nombre=f"Personal de {nombre}",
-        emoji="🏠",
+        emoji="home",
         moneda_base="EUR",
         owner_id=usuario.id,
     )

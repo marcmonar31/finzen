@@ -25,17 +25,17 @@ export function LockScreen({ onUnlock }: Props) {
     );
   }, []);
 
-  // Si hay biométrica registrada, intentar al montar
-  useEffect(() => {
-    if (biometricEnabled && credentialId) tryBiometric();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   const tryBiometric = useCallback(async () => {
     if (!credentialId) return;
     const ok = await authenticateWithBiometric(credentialId);
     if (ok) onUnlock();
   }, [credentialId, onUnlock]);
+
+  // Si hay biométrica registrada, intentar al montar
+  useEffect(() => {
+    if (biometricEnabled && credentialId) tryBiometric();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleDigit = useCallback(async (key: string) => {
     if (key === "del") {

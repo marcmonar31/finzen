@@ -313,7 +313,8 @@ function PinSetupSheet({ open, onClose }: { open: boolean; onClose: () => void }
 
   function reset() { setDigits([]); setFirst(""); setStep(pinHash ? "menu" : "create"); }
 
-  useEffect(() => { if (open) reset(); }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps, react-hooks/set-state-in-effect
+  useEffect(() => { if (open) reset(); }, [open]);
 
   async function handleDigit(key: string) {
     if (key === "del") { setDigits(d => d.slice(0, -1)); return; }
