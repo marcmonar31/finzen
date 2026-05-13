@@ -55,9 +55,10 @@ class DeudaOut(BaseModel):
     cuenta_id: Optional[str]
     activa: bool
     creado_en: datetime
+    saldo_pendiente: Optional[str] = None
 
     @classmethod
-    def from_orm(cls, d: Any) -> "DeudaOut":
+    def from_orm(cls, d: Any, saldo_pendiente: Optional[str] = None) -> "DeudaOut":
         return cls(
             id=d.id,
             workspace_id=d.workspace_id,
@@ -74,4 +75,5 @@ class DeudaOut(BaseModel):
             cuenta_id=d.cuenta_id,
             activa=d.activa,
             creado_en=d.creado_en,
+            saldo_pendiente=saldo_pendiente,
         )

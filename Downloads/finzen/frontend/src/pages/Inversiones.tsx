@@ -2,6 +2,7 @@ import { useState } from "react";
 import { TrendingUp, TrendingDown, Plus, RefreshCw, X } from "lucide-react";
 import { showFlash } from "@/stores/flash";
 import { clsx } from "clsx";
+import { useTranslation } from "react-i18next";
 import {
   useActivos,
   useCartera,
@@ -13,13 +14,6 @@ import {
 import type { PosicionDetalle } from "@/types/api";
 
 const TIPOS = ["accion", "etf", "cripto", "fondo", "materia_prima"];
-const TIPO_LABEL: Record<string, string> = {
-  accion: "Acción",
-  etf: "ETF",
-  cripto: "Cripto",
-  fondo: "Fondo",
-  materia_prima: "Materia prima",
-};
 
 function plColor(valor: string) {
   const n = parseFloat(valor);
@@ -35,6 +29,7 @@ function fmt(val: string, decimals = 2) {
 // ── NuevaPosicionSheet ────────────────────────────────────────────────────────
 
 function NuevaPosicionSheet({ onClose }: { onClose: () => void }) {
+  const { t } = useTranslation();
   const { data: activos = [] } = useActivos();
   const crearActivo = useCrearActivo();
   const crearPosicion = useCrearPosicion();
@@ -49,29 +44,29 @@ function NuevaPosicionSheet({ onClose }: { onClose: () => void }) {
   const [precioMedio, setPrecioMedio] = useState("");
 
   async function handleSubmit() {
-    if (!cantidad || !precioMedio) { showFlash("Rellena todos los campos", "error"); return; }
+    if (!cantidad || !precioMedio) { showFlash(t("inversiones.rellena_campos"), "error"); return; }
 
     let resolvedActivoId = activoId;
 
     if (tab === "nueva") {
-      if (!ticker || !nombre) { showFlash("Introduce ticker y nombre", "error"); return; }
+      if (!ticker || !nombre) { showFlash(t("inversiones.ticker_nombre_req"), "error"); return; }
       try {
         const activo = await crearActivo.mutateAsync({ ticker, nombre, tipo, moneda });
         resolvedActivoId = activo.id;
       } catch (e: unknown) {
-        showFlash(e instanceof Error ? e.message : "Error al crear activo", "error");
+        showFlash(e instanceof Error ? e.message : t("inversiones.error_activo"), "error");
         return;
       }
     }
 
-    if (!resolvedActivoId) { showFlash("Selecciona un activo", "error"); return; }
+    if (!resolvedActivoId) { showFlash(t("inversiones.selecciona_activo"), "error"); return; }
 
     try {
       await crearPosicion.mutateAsync({ activo_id: resolvedActivoId, cantidad, precio_medio: precioMedio });
-      showFlash("Posición añadida");
+      showFlash(t("inversiones.posicion_anadida"));
       onClose();
     } catch (e: unknown) {
-      showFlash(e instanceof Error ? e.message : "Error al crear posición", "error");
+      showFlash(e instanceof Error ? e.message : t("common.error"), "error");
     }
   }
 
@@ -81,22 +76,22 @@ function NuevaPosicionSheet({ onClose }: { onClose: () => void }) {
       <div className="relative w-full max-w-lg bg-surface rounded-t-3xl p-6 max-h-[90vh] overflow-y-auto">
         <div className="w-10 h-1 bg-gray-300 rounded-full mx-auto mb-5" />
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-semibold">Nueva posición</h2>
+          <h2 className="text-lg font-semibold">{t("inversiones.nueva")}</h2>
           <button onClick={onClose}><X size={20} className="text-gray-400" /></button>
         </div>
 
         {/* Tab selector */}
         <div className="flex gap-2 mb-4">
-          {(["nueva", "existente"] as const).map((t) => (
+          {(["nueva", "existente"] as const).map((tabVal) => (
             <button
-              key={t}
-              onClick={() => setTab(t)}
+              key={tabVal}
+              onClick={() => setTab(tabVal)}
               className={clsx(
                 "flex-1 py-2 rounded-xl text-sm font-medium transition-colors",
-                tab === t ? "bg-indigo-600 text-white" : "bg-gray-100 text-gray-600"
+                tab === tabVal ? "bg-indigo-600 text-white" : "bg-gray-100 text-gray-600"
               )}
             >
-              {t === "nueva" ? "Activo nuevo" : "Activo existente"}
+              {tabVal === "nueva" ? t("inversiones.activo_nuevo") : t("inversiones.activo_existente")}
             </button>
           ))}
         </div>
@@ -105,7 +100,7 @@ function NuevaPosicionSheet({ onClose }: { onClose: () => void }) {
           <div className="space-y-3">
             <div className="flex gap-2">
               <div className="flex-1">
-                <label className="text-xs text-gray-500 mb-1 block">Ticker</label>
+                <label className="text-xs text-gray-500 mb-1 block">{t("inversiones.ticker")}</label>
                 <input
                   className="w-full border rounded-xl px-3 py-2 text-sm uppercase"
                   placeholder="AAPL"
@@ -114,7 +109,7 @@ function NuevaPosicionSheet({ onClose }: { onClose: () => void }) {
                 />
               </div>
               <div className="w-28">
-                <label className="text-xs text-gray-500 mb-1 block">Moneda</label>
+                <label className="text-xs text-gray-500 mb-1 block">{t("common.moneda")}</label>
                 <input
                   className="w-full border rounded-xl px-3 py-2 text-sm uppercase"
                   placeholder="USD"
@@ -125,7 +120,7 @@ function NuevaPosicionSheet({ onClose }: { onClose: () => void }) {
               </div>
             </div>
             <div>
-              <label className="text-xs text-gray-500 mb-1 block">Nombre</label>
+              <label className="text-xs text-gray-500 mb-1 block">{t("inversiones.nombre_activo")}</label>
               <input
                 className="w-full border rounded-xl px-3 py-2 text-sm"
                 placeholder="Apple Inc."
@@ -134,27 +129,27 @@ function NuevaPosicionSheet({ onClose }: { onClose: () => void }) {
               />
             </div>
             <div>
-              <label className="text-xs text-gray-500 mb-1 block">Tipo</label>
+              <label className="text-xs text-gray-500 mb-1 block">{t("common.tipo")}</label>
               <select
                 className="w-full border rounded-xl px-3 py-2 text-sm"
                 value={tipo}
                 onChange={(e) => setTipo(e.target.value)}
               >
-                {TIPOS.map((t) => (
-                  <option key={t} value={t}>{TIPO_LABEL[t]}</option>
+                {TIPOS.map((tp) => (
+                  <option key={tp} value={tp}>{t(`inversion_tipos.${tp}`, { defaultValue: tp })}</option>
                 ))}
               </select>
             </div>
           </div>
         ) : (
           <div>
-            <label className="text-xs text-gray-500 mb-1 block">Selecciona activo</label>
+            <label className="text-xs text-gray-500 mb-1 block">{t("inversiones.selecciona_activo")}</label>
             <select
               className="w-full border rounded-xl px-3 py-2 text-sm"
               value={activoId}
               onChange={(e) => setActivoId(e.target.value)}
             >
-              <option value="">-- Elige --</option>
+              <option value="">--</option>
               {activos.map((a) => (
                 <option key={a.id} value={a.id}>{a.ticker} — {a.nombre}</option>
               ))}
@@ -164,7 +159,7 @@ function NuevaPosicionSheet({ onClose }: { onClose: () => void }) {
 
         <div className="flex gap-2 mt-3">
           <div className="flex-1">
-            <label className="text-xs text-gray-500 mb-1 block">Cantidad</label>
+            <label className="text-xs text-gray-500 mb-1 block">{t("inversiones.cantidad")}</label>
             <input
               type="number"
               inputMode="decimal"
@@ -175,7 +170,7 @@ function NuevaPosicionSheet({ onClose }: { onClose: () => void }) {
             />
           </div>
           <div className="flex-1">
-            <label className="text-xs text-gray-500 mb-1 block">Precio medio</label>
+            <label className="text-xs text-gray-500 mb-1 block">{t("inversiones.precio_medio")}</label>
             <input
               type="number"
               inputMode="decimal"
@@ -192,7 +187,7 @@ function NuevaPosicionSheet({ onClose }: { onClose: () => void }) {
           disabled={crearActivo.isPending || crearPosicion.isPending}
           className="mt-5 w-full bg-indigo-600 text-white py-3 rounded-2xl font-medium text-sm disabled:opacity-50"
         >
-          {crearActivo.isPending || crearPosicion.isPending ? "Guardando..." : "Añadir posición"}
+          {crearActivo.isPending || crearPosicion.isPending ? t("common.guardando") : t("inversiones.anadir_posicion")}
         </button>
       </div>
     </div>
@@ -202,6 +197,7 @@ function NuevaPosicionSheet({ onClose }: { onClose: () => void }) {
 // ── PosicionCard ──────────────────────────────────────────────────────────────
 
 function PosicionCard({ pos }: { pos: PosicionDetalle }) {
+  const { t } = useTranslation();
   const cerrar = useCerrarPosicion();
   const positivo = parseFloat(pos.pl_absoluto) >= 0;
 
@@ -211,7 +207,7 @@ function PosicionCard({ pos }: { pos: PosicionDetalle }) {
         <div>
           <div className="flex items-center gap-2">
             <span className="font-bold text-gray-900">{pos.ticker}</span>
-            <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">{pos.tipo}</span>
+            <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">{t(`inversion_tipos.${pos.tipo}`, { defaultValue: pos.tipo })}</span>
           </div>
           <p className="text-xs text-gray-500 mt-0.5">{pos.nombre}</p>
         </div>
@@ -225,15 +221,15 @@ function PosicionCard({ pos }: { pos: PosicionDetalle }) {
 
       <div className="mt-3 grid grid-cols-3 gap-2 text-center">
         <div>
-          <p className="text-xs text-gray-400">Cantidad</p>
+          <p className="text-xs text-gray-400">{t("inversiones.cantidad")}</p>
           <p className="text-sm font-medium">{parseFloat(pos.cantidad).toLocaleString()}</p>
         </div>
         <div>
-          <p className="text-xs text-gray-400">Precio medio</p>
+          <p className="text-xs text-gray-400">{t("inversiones.precio_medio")}</p>
           <p className="text-sm font-medium">{fmt(pos.precio_medio)}</p>
         </div>
         <div>
-          <p className="text-xs text-gray-400">Precio actual</p>
+          <p className="text-xs text-gray-400">{t("inversiones.precio_actual")}</p>
           <p className="text-sm font-medium">
             {pos.precio_actual ? fmt(pos.precio_actual) : "–"}
             {pos.variacion_dia && (
@@ -247,17 +243,17 @@ function PosicionCard({ pos }: { pos: PosicionDetalle }) {
 
       <button
         onClick={async () => {
-          if (!confirm(`¿Cerrar posición de ${pos.ticker}?`)) return;
+          if (!confirm(`${t("inversiones.cerrar_posicion_confirm")} ${pos.ticker}?`)) return;
           try {
             await cerrar.mutateAsync(pos.posicion_id);
-            showFlash("Posición cerrada", "delete");
+            showFlash(t("inversiones.posicion_cerrada"), "delete");
           } catch {
-            showFlash("Error al cerrar la posición", "error");
+            showFlash(t("inversiones.error_cerrar"), "error");
           }
         }}
         className="mt-3 w-full text-xs text-red-400 hover:text-red-600 py-1"
       >
-        Cerrar posición
+        {t("inversiones.cerrar_posicion")}
       </button>
     </div>
   );
@@ -266,6 +262,7 @@ function PosicionCard({ pos }: { pos: PosicionDetalle }) {
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function Inversiones() {
+  const { t } = useTranslation();
   const { data: cartera, isLoading } = useCartera();
   const actualizarPrecios = useActualizarPrecios();
   const [showSheet, setShowSheet] = useState(false);
@@ -277,9 +274,9 @@ export default function Inversiones() {
     try {
       const r = await actualizarPrecios.mutateAsync(undefined);
       const res = r as { actualizados: number };
-      showFlash(`Precios actualizados (${res.actualizados} activos)`);
+      showFlash(`${t("inversiones.precios_actualizados")} (${res.actualizados})`);
     } catch {
-      showFlash("Error al actualizar precios", "error");
+      showFlash(t("common.error"), "error");
     }
   }
 
@@ -288,7 +285,7 @@ export default function Inversiones() {
       <div className="max-w-lg mx-auto px-4 pt-6 pb-28">
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">Inversiones</h1>
+          <h1 className="text-2xl font-bold text-gray-900">{t("nav.inversiones")}</h1>
           <div className="flex gap-2">
             <button
               onClick={handleActualizar}
@@ -309,17 +306,17 @@ export default function Inversiones() {
         {/* Resumen cartera */}
         {cartera && (
           <div className="bg-indigo-600 rounded-3xl p-5 text-white mb-6">
-            <p className="text-indigo-200 text-sm mb-1">Valor total cartera</p>
+            <p className="text-indigo-200 text-sm mb-1">{t("inversiones.valor_total")}</p>
             <p className="text-3xl font-bold mb-3">
-              {parseFloat(cartera.total_actual).toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              {parseFloat(cartera.total_actual).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </p>
             <div className="flex gap-4">
               <div>
-                <p className="text-indigo-200 text-xs">Invertido</p>
+                <p className="text-indigo-200 text-xs">{t("inversiones.invertido")}</p>
                 <p className="font-semibold">{fmt(cartera.total_coste)}</p>
               </div>
               <div>
-                <p className="text-indigo-200 text-xs">P&L total</p>
+                <p className="text-indigo-200 text-xs">{t("inversiones.pl_total")}</p>
                 <div className="flex items-center gap-1">
                   {plPositivo ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
                   <p className={clsx("font-semibold", plPositivo ? "text-emerald-300" : "text-red-300")}>
@@ -333,14 +330,16 @@ export default function Inversiones() {
 
         {/* Lista posiciones */}
         {isLoading && (
-          <div className="text-center py-12 text-gray-400">Cargando cartera...</div>
+          <div className="text-center py-12 text-gray-400">{t("inversiones.cargando")}</div>
         )}
 
         {cartera && cartera.posiciones.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-4xl mb-3">📈</p>
-            <p className="text-gray-500">Sin posiciones activas</p>
-            <p className="text-sm text-gray-400 mt-1">Añade tu primera inversión</p>
+          <div className="text-center py-12 flex flex-col items-center">
+            <div className="w-16 h-16 rounded-2xl bg-surface shadow-[var(--shadow-card)] flex items-center justify-center mb-4">
+              <TrendingUp className="w-8 h-8 text-fg-muted" />
+            </div>
+            <p className="text-gray-500">{t("inversiones.sin_inversiones")}</p>
+            <p className="text-sm text-gray-400 mt-1">{t("inversiones.sin_inversiones_desc")}</p>
           </div>
         )}
 

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useUsuarioStore } from "@/stores/usuario";
 import { useWorkspaceStore } from "@/stores/workspace";
+import { useNavigationStore } from "@/stores/navigation";
 import { usePinStore } from "@/stores/pin";
 import { api } from "@/lib/api";
 import type { Usuario } from "@/types/api";
@@ -52,6 +53,8 @@ function AppShell() {
   const setUsuario = useUsuarioStore((s) => s.setUsuario);
   const usuario    = useUsuarioStore((s) => s.usuario);
   const { pinHash, locked, lock, unlock } = usePinStore();
+  const registerNavigate = useNavigationStore((s) => s.register);
+  useEffect(() => { registerNavigate(setSection); }, [registerNavigate]);
   const { i18n } = useTranslation();
 
   // Sincronizar perfil desde backend al arrancar

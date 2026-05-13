@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, ChevronDown } from "lucide-react";
 import { useForm, Controller } from "react-hook-form";
@@ -12,6 +13,7 @@ import { SelectorMoneda } from "@/components/SelectorMoneda";
 import { clsx } from "clsx";
 import { showFlash } from "@/stores/flash";
 import { CurrencyInput } from "@/components/CurrencyInput";
+import { useWorkspaceStore } from "@/stores/workspace";
 
 const schema = z.object({
   tipo: z.enum(["ingreso", "gasto"]),
@@ -32,20 +34,23 @@ interface Props {
 }
 
 export function NuevoMovimientoSheet({ open, onClose, defaultTipo }: Props) {
+  const { t } = useTranslation();
+  const workspace = useWorkspaceStore((s) => s.workspace);
   const { data: cuentas = [] } = useCuentas();
   const [tipo, setTipo] = useState<"ingreso" | "gasto">(defaultTipo ?? "gasto");
+  const [moneda, setMoneda] = useState(workspace?.moneda_base ?? "EUR");
 
-  // Sync tipo when sheet opens with a specific defaultTipo
+  // Sync tipo and moneda when sheet opens
   useEffect(() => {
     if (open) {
       const t = defaultTipo ?? "gasto";
       setTipo(t);
       setValue("tipo", t);
       setValue("categoria_id", "");
+      setMoneda(workspace?.moneda_base ?? "EUR");
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, defaultTipo]);
-  const [moneda, setMoneda] = useState("EUR");
   const { data: categorias = [] } = useCategorias(tipo);
   const crear = useCrearMovimiento();
 
@@ -80,11 +85,11 @@ export function NuevoMovimientoSheet({ open, onClose, defaultTipo }: Props) {
         moneda,
         categoria_id: data.categoria_id || null,
       });
-      showFlash("Movimiento añadido");
+      showFlash(t("movimientos.movimiento_anadido"));
       reset();
       onClose();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Error al guardar";
+      const msg = err instanceof Error ? err.message : t("common.error");
       showFlash(msg, "error");
     }
   }
@@ -92,24 +97,24 @@ export function NuevoMovimientoSheet({ open, onClose, defaultTipo }: Props) {
   return (
     <AnimatePresence>
       {open && (
-        <>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 bg-black/20 backdrop-blur-md z-50 flex items-center justify-center p-4"
+          onClick={onClose}
+        >
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/40 z-40"
-            onClick={onClose}
-          />
-          <motion.div
-            initial={{ y: "100%" }}
-            animate={{ y: 0 }}
-            exit={{ y: "100%" }}
-            transition={{ type: "spring", damping: 30, stiffness: 300 }}
-            className="fixed bottom-4 left-4 right-4 z-50 bg-surface rounded-3xl max-h-[85vh] overflow-y-auto shadow-[var(--shadow-floating)]"
+            initial={{ opacity: 0, scale: 0.96, y: 8 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.96, y: 8 }}
+            transition={{ type: "spring", damping: 28, stiffness: 380 }}
+            className="w-full max-w-md bg-surface rounded-3xl max-h-[90vh] overflow-y-auto shadow-[var(--shadow-floating)]"
+            onClick={(e) => e.stopPropagation()}
           >
             <form onSubmit={handleSubmit(onSubmit)} className="p-5 space-y-4">
               <div className="flex items-center justify-between">
-                <h2 className="font-bold text-lg text-fg">Nuevo movimiento</h2>
+                <h2 className="font-bold text-lg text-fg">{t("movimientos.nuevo")}</h2>
                 <button type="button" onClick={onClose} className="w-8 h-8 rounded-full bg-surface-2 flex items-center justify-center">
                   <X className="w-4 h-4 text-fg" />
                 </button>
@@ -117,17 +122,17 @@ export function NuevoMovimientoSheet({ open, onClose, defaultTipo }: Props) {
 
               {/* Toggle ingreso/gasto */}
               <div className="flex bg-surface-2 rounded-2xl p-1 gap-1">
-                {(["gasto", "ingreso"] as const).map((t) => (
+                {(["gasto", "ingreso"] as const).map((tp) => (
                   <button
-                    key={t}
+                    key={tp}
                     type="button"
-                    onClick={() => handleTipo(t)}
+                    onClick={() => handleTipo(tp)}
                     className={clsx(
                       "flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all",
-                      tipo === t ? "bg-ink text-white shadow" : "text-fg-muted"
+                      tipo === tp ? "bg-ink text-white shadow" : "text-fg-muted"
                     )}
                   >
-                    {t === "gasto" ? "💸 Gasto" : "💰 Ingreso"}
+                    {tp === "gasto" ? t("movimientos.gasto") : t("movimientos.ingreso")}
                   </button>
                 ))}
               </div>
@@ -155,7 +160,7 @@ export function NuevoMovimientoSheet({ open, onClose, defaultTipo }: Props) {
                 {errors.importe && <p className="text-xs text-red-500 mt-1">{errors.importe.message}</p>}
                 {cuentaSeleccionada && cuentaSeleccionada.moneda !== moneda && (
                   <p className="text-xs text-fg-muted mt-1">
-                    Se convertirá a {cuentaSeleccionada.moneda} con la tasa del día
+                    {t("movimientos.convertir_tasa", { moneda: cuentaSeleccionada.moneda })}
                   </p>
                 )}
               </div>
@@ -164,7 +169,7 @@ export function NuevoMovimientoSheet({ open, onClose, defaultTipo }: Props) {
               <div>
                 <input
                   {...register("concepto")}
-                  placeholder="Concepto (ej. Mercadona)"
+                  placeholder={t("movimientos.concepto_placeholder")}
                   className="w-full bg-surface-2 rounded-xl px-4 py-3 text-sm text-fg placeholder:text-fg-subtle focus:outline-none focus:ring-2 focus:ring-ink/20"
                 />
                 {errors.concepto && <p className="text-xs text-red-500 mt-1">{errors.concepto.message}</p>}
@@ -177,10 +182,10 @@ export function NuevoMovimientoSheet({ open, onClose, defaultTipo }: Props) {
                   onChange={handleCuenta}
                   className="w-full bg-surface-2 rounded-xl px-4 py-3 text-sm text-fg appearance-none focus:outline-none focus:ring-2 focus:ring-ink/20"
                 >
-                  <option value="">Elige una cuenta</option>
+                  <option value="">{t("movimientos.elige_cuenta")}</option>
                   {cuentas.map((c) => (
                     <option key={c.id} value={c.id}>
-                      {c.emoji ?? "🏦"} {c.nombre} ({c.moneda})
+                      {c.nombre} ({c.moneda})
                     </option>
                   ))}
                 </select>
@@ -196,10 +201,10 @@ export function NuevoMovimientoSheet({ open, onClose, defaultTipo }: Props) {
                     onChange={(e) => setValue("categoria_id", e.target.value)}
                     className="w-full bg-surface-2 rounded-xl px-4 py-3 text-sm text-fg appearance-none focus:outline-none focus:ring-2 focus:ring-ink/20"
                   >
-                    <option value="">Sin categoría</option>
+                    <option value="">{t("common.sin_categoria")}</option>
                     {categorias.map((cat) => (
                       <option key={cat.id} value={cat.id}>
-                        {cat.emoji ?? "📦"} {cat.nombre}
+                        {cat.nombre}
                       </option>
                     ))}
                   </select>
@@ -216,16 +221,24 @@ export function NuevoMovimientoSheet({ open, onClose, defaultTipo }: Props) {
                 />
               </div>
 
+              {/* Notas */}
+              <textarea
+                {...register("notas")}
+                placeholder={t("common.notas_placeholder")}
+                rows={2}
+                className="w-full bg-surface-2 rounded-xl px-4 py-3 text-sm text-fg placeholder:text-fg-subtle focus:outline-none focus:ring-2 focus:ring-ink/20 resize-none"
+              />
+
               <button
                 type="submit"
                 disabled={crear.isPending}
                 className="w-full bg-ink text-white rounded-2xl py-4 font-semibold text-base active:scale-95 transition-transform disabled:opacity-60"
               >
-                {crear.isPending ? "Guardando…" : "Guardar movimiento"}
+                {crear.isPending ? t("common.guardando") : t("movimientos.guardar")}
               </button>
             </form>
           </motion.div>
-        </>
+        </motion.div>
       )}
     </AnimatePresence>
   );

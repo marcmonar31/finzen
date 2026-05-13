@@ -1,7 +1,9 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Pencil, Trash2, ArrowLeftRight } from "lucide-react";
+import { Pencil, Trash2, ArrowLeftRight, ArrowDownLeft, ArrowUpRight } from "lucide-react";
+import { AppIcon } from "@/components/AppIcon";
+import { useTranslation } from "react-i18next";
 import type { Movimiento } from "@/types/api";
 import { formatCurrency } from "@/lib/format";
 import Decimal from "decimal.js";
@@ -41,6 +43,7 @@ function ConfirmDelete({
   onConfirm: () => void;
   onCancel: () => void;
 }) {
+  const { t } = useTranslation();
   return createPortal(
     <AnimatePresence>
       <motion.div
@@ -59,23 +62,23 @@ function ConfirmDelete({
         >
           <div className="w-10 h-1 bg-border-ui rounded-full mx-auto mb-5" />
           <p className="font-bold text-fg text-base text-center mb-1">
-            ¿Eliminar este movimiento?
+            {t("movimientos.eliminar_confirm")}
           </p>
           <p className="text-fg-muted text-sm text-center mb-6">
-            "{concepto}" se archivará y no aparecerá en tus cuentas.
+            "{concepto}" {t("movimientos.eliminar_desc")}
           </p>
           <div className="flex gap-3">
             <button
               onClick={onCancel}
               className="flex-1 py-3.5 rounded-2xl bg-surface-2 text-fg font-semibold text-sm active:scale-95 transition-transform"
             >
-              Cancelar
+              {t("common.cancelar")}
             </button>
             <button
               onClick={onConfirm}
               className="flex-1 py-3.5 rounded-2xl bg-[#FF5C5C] text-white font-semibold text-sm active:scale-95 transition-transform"
             >
-              Sí, eliminar
+              {t("common.si_eliminar")}
             </button>
           </div>
         </motion.div>
@@ -87,13 +90,23 @@ function ConfirmDelete({
 
 // ── Main component ─────────────────────────────────────────────────────────────
 export function MovimientoItem({ movimiento: m, monedaBase, onEdit, onDelete }: Props) {
-  const discreto = useUsuarioStore((s) => s.usuario?.ocultar_importes ?? false);
+  const { t } = useTranslation();
+  const discreto    = useUsuarioStore((s) => s.usuario?.ocultar_importes ?? false);
   const positivo    = (TIPO_SIGNO[m.tipo] ?? 1) > 0;
   const importe     = new Decimal(m.importe);
   const importeBase = new Decimal(m.importe_base);
   const signo       = positivo ? "+" : "-";
   const esTrans     = esTransferencia(m.tipo);
   const muestraBase = monedaBase && monedaBase !== m.moneda;
+
+  const [isDesktop, setIsDesktop] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 768px)");
+    setIsDesktop(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setIsDesktop(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
 
   const wrapRef    = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -119,13 +132,12 @@ export function MovimientoItem({ movimiento: m, monedaBase, onEdit, onDelete }: 
     if (!wrap || !content) return;
 
     const h = wrap.offsetHeight;
-
     content.style.transition = "transform 200ms ease-in";
     content.style.transform  = "translateX(-110%)";
 
     setTimeout(() => {
       wrap.style.height         = `${h}px`;
-      void wrap.offsetHeight;   // force reflow
+      void wrap.offsetHeight;
       wrap.style.transition     = "height 200ms ease, border-top-width 200ms ease";
       wrap.style.height         = "0px";
       wrap.style.borderTopWidth = "0px";
@@ -196,38 +208,41 @@ export function MovimientoItem({ movimiento: m, monedaBase, onEdit, onDelete }: 
     <>
       <div ref={wrapRef} className="relative overflow-hidden">
 
-        {/* Edit background — left half, dark with green accent */}
-        <div className="absolute inset-y-0 left-0 w-1/2 flex items-center pl-5 bg-ink">
-          <div className="flex flex-col items-center gap-0.5">
-            <Pencil className="w-5 h-5 text-[#C7FF6B]" />
-            <span className="text-[10px] font-bold text-[#C7FF6B] uppercase tracking-wide">Editar</span>
-          </div>
-        </div>
+        {/* Swipe backgrounds — solo en móvil */}
+        {!isDesktop && (
+          <>
+            <div className="absolute inset-y-0 left-0 w-1/2 flex items-center pl-5 bg-ink">
+              <div className="flex flex-col items-center gap-0.5">
+                <Pencil className="w-5 h-5 text-[#C7FF6B]" />
+                <span className="text-[10px] font-bold text-[#C7FF6B] uppercase tracking-wide">{t("common.editar")}</span>
+              </div>
+            </div>
+            <div className="absolute inset-y-0 right-0 w-1/2 flex items-center justify-end pr-5 bg-[#FF5C5C]">
+              <div className="flex flex-col items-center gap-0.5">
+                <Trash2 className="w-5 h-5 text-white" />
+                <span className="text-[10px] font-bold text-white uppercase tracking-wide">{t("common.eliminar")}</span>
+              </div>
+            </div>
+          </>
+        )}
 
-        {/* Delete background — right half, red */}
-        <div className="absolute inset-y-0 right-0 w-1/2 flex items-center justify-end pr-5 bg-[#FF5C5C]">
-          <div className="flex flex-col items-center gap-0.5">
-            <Trash2 className="w-5 h-5 text-white" />
-            <span className="text-[10px] font-bold text-white uppercase tracking-wide">Eliminar</span>
-          </div>
-        </div>
-
-        {/* Swipeable content row — px-4 here keeps padding inside the full-bleed wrapper */}
+        {/* Fila del movimiento */}
         <div
           ref={contentRef}
           className="relative z-10 flex items-center gap-3 py-3 px-4 bg-surface"
           style={{ touchAction: "pan-y", WebkitUserSelect: "none", userSelect: "none" }}
-          onPointerDown={onDown}
-          onPointerMove={onMove}
-          onPointerUp={onUp}
-          onPointerCancel={onCancel}
+          onPointerDown={isDesktop ? undefined : onDown}
+          onPointerMove={isDesktop ? undefined : onMove}
+          onPointerUp={isDesktop ? undefined : onUp}
+          onPointerCancel={isDesktop ? undefined : onCancel}
           onContextMenu={(e) => e.preventDefault()}
         >
           {/* Icono */}
-          <div className="w-10 h-10 rounded-xl bg-surface-2 flex items-center justify-center text-xl flex-shrink-0 pointer-events-none">
+          <div className="w-10 h-10 rounded-xl bg-surface-2 flex items-center justify-center flex-shrink-0 pointer-events-none">
             {esTrans
               ? <ArrowLeftRight className="w-5 h-5 text-fg-muted" />
-              : (m.categoria_emoji ?? (positivo ? "💰" : "💸"))
+              : <AppIcon name={m.categoria_emoji} size={20} className="text-fg-muted"
+                  fallback={positivo ? ArrowDownLeft : ArrowUpRight} />
             }
           </div>
 
@@ -241,7 +256,9 @@ export function MovimientoItem({ movimiento: m, monedaBase, onEdit, onDelete }: 
                 : m.concepto}
             </p>
             <p className="text-xs text-fg-muted truncate">
-              {esTrans ? "Transferencia" : (m.categoria_nombre ?? m.tipo)}
+              {esTrans
+                ? t("movimientos.transferencia")
+                : [m.cuenta_nombre, m.categoria_nombre].filter(Boolean).join(" · ") || m.tipo}
             </p>
           </div>
 
@@ -263,6 +280,24 @@ export function MovimientoItem({ movimiento: m, monedaBase, onEdit, onDelete }: 
               </p>
             )}
           </div>
+
+          {/* Botones inline — solo en escritorio, visibles al hacer hover */}
+          {isDesktop && (
+            <div className="flex items-center gap-1 ml-2">
+              <button
+                onClick={() => onEdit?.(m)}
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-fg-muted hover:text-fg hover:bg-surface-2 transition-colors"
+              >
+                <Pencil className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setShowConfirm(true)}
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-fg-muted hover:text-[#FF5C5C] hover:bg-surface-2 transition-colors"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
+          )}
         </div>
       </div>
 

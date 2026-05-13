@@ -2,26 +2,27 @@ import { useState, useRef } from "react";
 import { createPortal } from "react-dom";
 import { ChevronDown, Search } from "lucide-react";
 import { clsx } from "clsx";
+import { useTranslation } from "react-i18next";
 
-const MONEDAS = [
-  { code: "EUR", name: "Euro",             flag: "🇪🇺" },
-  { code: "USD", name: "Dólar",            flag: "🇺🇸" },
-  { code: "GBP", name: "Libra",            flag: "🇬🇧" },
-  { code: "CHF", name: "Franco suizo",     flag: "🇨🇭" },
-  { code: "JPY", name: "Yen",              flag: "🇯🇵" },
-  { code: "MXN", name: "Peso mexicano",    flag: "🇲🇽" },
-  { code: "ARS", name: "Peso argentino",   flag: "🇦🇷" },
-  { code: "BRL", name: "Real",             flag: "🇧🇷" },
-  { code: "COP", name: "Peso colombiano",  flag: "🇨🇴" },
-  { code: "CLP", name: "Peso chileno",     flag: "🇨🇱" },
-  { code: "CAD", name: "Dólar canadiense", flag: "🇨🇦" },
-  { code: "AUD", name: "Dólar australiano",flag: "🇦🇺" },
-  { code: "CNY", name: "Yuan",             flag: "🇨🇳" },
-  { code: "INR", name: "Rupia india",      flag: "🇮🇳" },
-  { code: "SEK", name: "Corona sueca",     flag: "🇸🇪" },
-  { code: "NOK", name: "Corona noruega",   flag: "🇳🇴" },
-  { code: "DKK", name: "Corona danesa",    flag: "🇩🇰" },
-  { code: "PLN", name: "Esloti polaco",    flag: "🇵🇱" },
+const MONEDAS_BASE = [
+  { code: "EUR", flag: "🇪🇺" },
+  { code: "USD", flag: "🇺🇸" },
+  { code: "GBP", flag: "🇬🇧" },
+  { code: "CHF", flag: "🇨🇭" },
+  { code: "JPY", flag: "🇯🇵" },
+  { code: "MXN", flag: "🇲🇽" },
+  { code: "ARS", flag: "🇦🇷" },
+  { code: "BRL", flag: "🇧🇷" },
+  { code: "COP", flag: "🇨🇴" },
+  { code: "CLP", flag: "🇨🇱" },
+  { code: "CAD", flag: "🇨🇦" },
+  { code: "AUD", flag: "🇦🇺" },
+  { code: "CNY", flag: "🇨🇳" },
+  { code: "INR", flag: "🇮🇳" },
+  { code: "SEK", flag: "🇸🇪" },
+  { code: "NOK", flag: "🇳🇴" },
+  { code: "DKK", flag: "🇩🇰" },
+  { code: "PLN", flag: "🇵🇱" },
 ];
 
 interface Props {
@@ -31,10 +32,16 @@ interface Props {
 }
 
 export function SelectorMoneda({ value, onChange, className }: Props) {
+  const { t } = useTranslation();
   const [open,     setOpen]     = useState(false);
   const [busqueda, setBusqueda] = useState("");
   const [dropPos,  setDropPos]  = useState({ top: 0, right: 0 });
   const btnRef = useRef<HTMLButtonElement>(null);
+
+  const MONEDAS = MONEDAS_BASE.map((m) => ({
+    ...m,
+    name: t(`monedas.${m.code}`, { defaultValue: m.code }),
+  }));
 
   const seleccionada = MONEDAS.find((m) => m.code === value) ?? { code: value, name: value, flag: "💱" };
 
@@ -95,7 +102,7 @@ export function SelectorMoneda({ value, onChange, className }: Props) {
                   autoFocus
                   value={busqueda}
                   onChange={(e) => setBusqueda(e.target.value)}
-                  placeholder="Buscar…"
+                  placeholder={t("common.buscar")}
                   className="w-full pl-7 pr-2 py-1.5 text-sm bg-surface-2 rounded-lg focus:outline-none"
                 />
               </div>

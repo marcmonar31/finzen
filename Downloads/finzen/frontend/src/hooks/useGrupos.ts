@@ -119,3 +119,23 @@ export function useSalirGrupo() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["grupos"] }),
   });
 }
+
+export function useActualizarGrupo() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: { nombre?: string; emoji?: string } }) =>
+      api.patch(`/grupos/${id}`, data),
+    onSuccess: (_, vars) => {
+      qc.invalidateQueries({ queryKey: ["grupos"] });
+      qc.invalidateQueries({ queryKey: ["grupos", vars.id] });
+    },
+  });
+}
+
+export function useEliminarGrupo() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (grupo_id: string) => api.delete(`/grupos/${grupo_id}`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["grupos"] }),
+  });
+}

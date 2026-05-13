@@ -1,9 +1,10 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Trash2, ArrowLeftRight } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import type { Transferencia } from "@/types/api";
-import { formatCurrency } from "@/lib/format";
+import { formatCurrency, formatDate } from "@/lib/format";
 import Decimal from "decimal.js";
 
 interface Props {
@@ -22,6 +23,7 @@ function ConfirmDelete({
   onConfirm: () => void;
   onCancel: () => void;
 }) {
+  const { t } = useTranslation();
   return createPortal(
     <AnimatePresence>
       <motion.div
@@ -40,23 +42,23 @@ function ConfirmDelete({
         >
           <div className="w-10 h-1 bg-border-ui rounded-full mx-auto mb-5" />
           <p className="font-bold text-fg text-base text-center mb-1">
-            ¿Eliminar esta transferencia?
+            {t("transferencias.eliminar_confirm")}
           </p>
           <p className="text-fg-muted text-sm text-center mb-6">
-            Se archivarán los dos movimientos asociados.
+            {t("transferencias.eliminar_desc")}
           </p>
           <div className="flex gap-3">
             <button
               onClick={onCancel}
               className="flex-1 py-3.5 rounded-2xl bg-surface-2 text-fg font-semibold text-sm active:scale-95 transition-transform"
             >
-              Cancelar
+              {t("common.cancelar")}
             </button>
             <button
               onClick={onConfirm}
               className="flex-1 py-3.5 rounded-2xl bg-[#FF5C5C] text-white font-semibold text-sm active:scale-95 transition-transform"
             >
-              Sí, eliminar
+              {t("common.si_eliminar")}
             </button>
           </div>
         </motion.div>
@@ -66,9 +68,19 @@ function ConfirmDelete({
   );
 }
 
-export function TransferenciaItem({ transferencia: t, onDelete }: Props) {
-  const orig = t.movimiento_origen;
-  const dest = t.movimiento_destino;
+export function TransferenciaItem({ transferencia: transf, onDelete }: Props) {
+  const { t } = useTranslation();
+  const orig = transf.movimiento_origen;
+  const dest = transf.movimiento_destino;
+
+  const [isDesktop, setIsDesktop] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 768px)");
+    setIsDesktop(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setIsDesktop(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
 
   const wrapRef    = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -106,7 +118,7 @@ export function TransferenciaItem({ transferencia: t, onDelete }: Props) {
 
       setTimeout(() => {
         setGone(true);
-        onDelete?.(t);
+        onDelete?.(transf);
       }, 200);
     }, 200);
   }
@@ -133,7 +145,6 @@ export function TransferenciaItem({ transferencia: t, onDelete }: Props) {
 
     if (locked.current !== "h") return;
 
-    // Only allow left swipe (negative x)
     let x = Math.min(dx, 0);
     if (Math.abs(x) > MAX_SWIPE) {
       x = -(MAX_SWIPE + (Math.abs(x) - MAX_SWIPE) * 0.15);
@@ -168,23 +179,25 @@ export function TransferenciaItem({ transferencia: t, onDelete }: Props) {
     <>
       <div ref={wrapRef} className="relative overflow-hidden">
 
-        {/* Delete background — right half */}
-        <div className="absolute inset-y-0 right-0 w-1/2 flex items-center justify-end pr-5 bg-[#FF5C5C]">
-          <div className="flex flex-col items-center gap-0.5">
-            <Trash2 className="w-5 h-5 text-white" />
-            <span className="text-[10px] font-bold text-white uppercase tracking-wide">Eliminar</span>
+        {/* Delete background — solo en móvil */}
+        {!isDesktop && (
+          <div className="absolute inset-y-0 right-0 w-1/2 flex items-center justify-end pr-5 bg-[#FF5C5C]">
+            <div className="flex flex-col items-center gap-0.5">
+              <Trash2 className="w-5 h-5 text-white" />
+              <span className="text-[10px] font-bold text-white uppercase tracking-wide">{t("common.eliminar")}</span>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Swipeable content row */}
         <div
           ref={contentRef}
           className="relative z-10 flex items-center gap-3 py-3 px-4 bg-surface"
           style={{ touchAction: "pan-y", WebkitUserSelect: "none", userSelect: "none" }}
-          onPointerDown={onDown}
-          onPointerMove={onMove}
-          onPointerUp={onUp}
-          onPointerCancel={onCancel}
+          onPointerDown={isDesktop ? undefined : onDown}
+          onPointerMove={isDesktop ? undefined : onMove}
+          onPointerUp={isDesktop ? undefined : onUp}
+          onPointerCancel={isDesktop ? undefined : onCancel}
           onContextMenu={(e) => e.preventDefault()}
         >
           <div className="w-10 h-10 rounded-xl bg-surface-2 flex items-center justify-center flex-shrink-0 pointer-events-none">
@@ -195,10 +208,10 @@ export function TransferenciaItem({ transferencia: t, onDelete }: Props) {
             <p className="font-semibold text-fg text-sm truncate">
               {orig?.cuenta_nombre && dest?.cuenta_nombre
                 ? `${orig.cuenta_nombre} → ${dest.cuenta_nombre}`
-                : (orig?.concepto ?? "Transferencia")}
+                : (orig?.concepto ?? t("movimientos.transferencia"))}
             </p>
             <p className="text-xs text-fg-muted truncate">
-              {t.creado_en.slice(8, 10)}/{t.creado_en.slice(5, 7)}/{t.creado_en.slice(0, 4)}
+              {formatDate(orig?.fecha ?? transf.creado_en.slice(0, 10))}
             </p>
           </div>
 
@@ -214,6 +227,18 @@ export function TransferenciaItem({ transferencia: t, onDelete }: Props) {
               </p>
             )}
           </div>
+
+          {/* Botón inline — solo en escritorio */}
+          {isDesktop && (
+            <div className="ml-2">
+              <button
+                onClick={() => setShowConfirm(true)}
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-fg-muted hover:text-[#FF5C5C] hover:bg-surface-2 transition-colors"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
+          )}
         </div>
       </div>
 

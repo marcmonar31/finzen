@@ -1,13 +1,15 @@
-import { useState } from "react";
-import { Plus, Search, X, SlidersHorizontal, ArrowLeft } from "lucide-react";
+import { useState, useMemo } from "react";
+import { useTranslation } from "react-i18next";
+import { Plus, Search, X, SlidersHorizontal, ArrowLeft, ClipboardList, ArrowDownLeft, ArrowUpRight } from "lucide-react";
 import { useMovimientos, useArchivarMovimiento } from "@/hooks/useMovimientos";
 import { MovimientoItem } from "@/components/MovimientoItem";
 import { NuevoMovimientoSheet } from "@/components/NuevoMovimientoSheet";
 import { EditarMovimientoSheet } from "@/components/EditarMovimientoSheet";
 import { FiltroMovimientosSheet, type FiltrosAplicados } from "@/components/FiltroMovimientosSheet";
-import { formatDate } from "@/lib/format";
+import { formatDate, formatCurrency } from "@/lib/format";
 import type { Movimiento } from "@/types/api";
 import { showFlash } from "@/stores/flash";
+import { useWorkspaceStore } from "@/stores/workspace";
 
 function agruparPorFecha(movs: Movimiento[]): Map<string, Movimiento[]> {
   const mapa = new Map<string, Movimiento[]>();
@@ -20,6 +22,8 @@ function agruparPorFecha(movs: Movimiento[]): Map<string, Movimiento[]> {
 }
 
 export function Movimientos() {
+  const { t } = useTranslation();
+  const moneda = useWorkspaceStore((s) => s.workspace?.moneda_base ?? "EUR");
   const [busqueda,      setBusqueda]      = useState("");
   const [showNuevo,     setShowNuevo]     = useState(false);
   const [editando,      setEditando]      = useState<Movimiento | null>(null);
@@ -31,7 +35,8 @@ export function Movimientos() {
     filtrosActivos.tipo ||
     filtrosActivos.fecha_desde ||
     filtrosActivos.fecha_hasta ||
-    filtrosActivos.categoria_id
+    filtrosActivos.categoria_id ||
+    filtrosActivos.cuenta_id
   );
 
   const { data: movimientos = [], isLoading } = useMovimientos({
@@ -41,12 +46,22 @@ export function Movimientos() {
 
   const grupos = agruparPorFecha(movimientos);
 
+  const resumenFiltrado = useMemo(() => {
+    if (!hayFiltros && !busqueda) return null;
+    let ingresos = 0, gastos = 0;
+    for (const m of movimientos) {
+      if (m.tipo === "ingreso") ingresos += parseFloat(m.importe_base);
+      else if (m.tipo === "gasto") gastos += parseFloat(m.importe_base);
+    }
+    return { ingresos, gastos };
+  }, [movimientos, hayFiltros, busqueda]);
+
   async function handleArchivar(id: string) {
     try {
       await archivar.mutateAsync(id);
-      showFlash("Movimiento eliminado", "delete");
+      showFlash(t("movimientos.movimiento_eliminado"), "delete");
     } catch {
-      showFlash("Error al eliminar", "error");
+      showFlash(t("common.error"), "error");
     }
   }
 
@@ -55,7 +70,7 @@ export function Movimientos() {
       {/* Header — píldora flotante */}
       <div className="pt-10 px-4 pb-4">
         <div className="bg-ink rounded-3xl px-5 py-4 flex items-center justify-between shadow-[var(--shadow-floating)]">
-          <h1 className="text-white font-bold text-2xl">Movimientos</h1>
+          <h1 className="text-white font-bold text-2xl">{t("movimientos.titulo")}</h1>
           <div className="flex items-center gap-2">
             <button
               onClick={() => setShowFiltros(true)}
@@ -81,7 +96,7 @@ export function Movimientos() {
             <input
               value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
-              placeholder="Buscar movimientos…"
+              placeholder={t("movimientos.buscar")}
               className="w-full bg-surface text-fg placeholder:text-[#B0B0B4] rounded-2xl pl-9 pr-9 py-2.5 text-sm focus:outline-none shadow-[var(--shadow-card)]"
             />
             {busqueda && (
@@ -100,9 +115,33 @@ export function Movimientos() {
           >
             <ArrowLeft className="w-4 h-4 flex-shrink-0" />
             <span className="truncate">
-              {filtrosActivos._periodoLabel ?? "Filtros activos"} — toca para limpiar
+              {filtrosActivos._periodoLabel ?? t("movimientos.filtros_activos")} — {t("movimientos.toca_limpiar")}
             </span>
           </button>
+        )}
+
+        {/* Resumen del período filtrado */}
+        {resumenFiltrado && !isLoading && movimientos.length > 0 && (
+          <div className="mt-2 grid grid-cols-2 gap-2">
+            <div className="bg-surface rounded-2xl px-4 py-3 flex items-center gap-2 shadow-[var(--shadow-card)]">
+              <ArrowDownLeft className="w-4 h-4 text-[#5BAA1F] flex-shrink-0" />
+              <div className="min-w-0">
+                <p className="text-[10px] text-fg-muted uppercase tracking-wide font-semibold">{t("dashboard.ingresos_mes")}</p>
+                <p className="text-sm font-bold text-[#5BAA1F] tabular-nums truncate">
+                  +{formatCurrency(resumenFiltrado.ingresos.toFixed(2), moneda)}
+                </p>
+              </div>
+            </div>
+            <div className="bg-surface rounded-2xl px-4 py-3 flex items-center gap-2 shadow-[var(--shadow-card)]">
+              <ArrowUpRight className="w-4 h-4 text-[#FF5C5C] flex-shrink-0" />
+              <div className="min-w-0">
+                <p className="text-[10px] text-fg-muted uppercase tracking-wide font-semibold">{t("dashboard.gastos_mes")}</p>
+                <p className="text-sm font-bold text-[#FF5C5C] tabular-nums truncate">
+                  -{formatCurrency(resumenFiltrado.gastos.toFixed(2), moneda)}
+                </p>
+              </div>
+            </div>
+          </div>
         )}
       </div>
 
@@ -124,14 +163,16 @@ export function Movimientos() {
 
         {!isLoading && movimientos.length === 0 && (
           <div className="flex flex-col items-center justify-center py-16 text-center">
-            <div className="w-16 h-16 rounded-2xl bg-surface shadow-[var(--shadow-card)] flex items-center justify-center text-3xl mb-4">📋</div>
-            <p className="font-bold text-fg mb-1">Sin movimientos</p>
+            <div className="w-16 h-16 rounded-2xl bg-surface shadow-[var(--shadow-card)] flex items-center justify-center mb-4">
+              <ClipboardList className="w-8 h-8 text-fg-muted" />
+            </div>
+            <p className="font-bold text-fg mb-1">{t("movimientos.sin_movimientos")}</p>
             <p className="text-fg-muted text-sm mb-5">
-              {busqueda || hayFiltros ? "No se encontraron resultados" : "Registra tu primer movimiento"}
+              {busqueda || hayFiltros ? t("movimientos.no_resultados") : t("movimientos.registra_primero")}
             </p>
             {!busqueda && !hayFiltros && (
               <button onClick={() => setShowNuevo(true)} className="bg-ink text-white rounded-full px-6 py-2.5 text-sm font-semibold">
-                Añadir movimiento
+                {t("movimientos.anadir")}
               </button>
             )}
           </div>

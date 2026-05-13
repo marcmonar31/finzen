@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, ChevronDown } from "lucide-react";
 import { useForm } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useCuentas } from "@/hooks/useCuentas";
@@ -28,14 +29,6 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>;
 
-const FRECUENCIAS: { value: FrecuenciaValue; label: string; icon: string }[] = [
-  { value: "diario",         label: "Cada día",       icon: "📅" },
-  { value: "semanal",        label: "Cada semana",    icon: "📆" },
-  { value: "cada_4_semanas", label: "Cada 4 semanas", icon: "🗓️" },
-  { value: "mensual",        label: "Cada mes",       icon: "🗓️" },
-  { value: "anual",          label: "Cada año",       icon: "📋" },
-];
-
 interface Props {
   open: boolean;
   onClose: () => void;
@@ -43,11 +36,20 @@ interface Props {
 }
 
 export function NuevoRecurrenteSheet({ open, onClose, recurrente }: Props) {
+  const { t } = useTranslation();
   const { data: cuentas = [] } = useCuentas();
   const crear     = useCrearRecurrente();
   const actualizar = useActualizarRecurrente();
 
   const editando = !!recurrente;
+
+  const FRECUENCIAS: { value: FrecuenciaValue; label: string }[] = [
+    { value: "diario",         label: t("recurrentes.freq_dia")      },
+    { value: "semanal",        label: t("recurrentes.freq_semana")   },
+    { value: "cada_4_semanas", label: t("recurrentes.freq_4semanas") },
+    { value: "mensual",        label: t("recurrentes.freq_mes")      },
+    { value: "anual",          label: t("recurrentes.freq_anio")     },
+  ];
 
   const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -93,8 +95,8 @@ export function NuevoRecurrenteSheet({ open, onClose, recurrente }: Props) {
     }
   }, [open, recurrente, reset]);
 
-  function handleTipo(t: "ingreso" | "gasto") {
-    setValue("tipo", t);
+  function handleTipo(tp: "ingreso" | "gasto") {
+    setValue("tipo", tp);
     setValue("categoria_id", "");
   }
 
@@ -110,7 +112,7 @@ export function NuevoRecurrenteSheet({ open, onClose, recurrente }: Props) {
           frecuencia:   data.frecuencia,
           dia_mes:      data.frecuencia === "mensual" ? (data.dia_mes ?? null) : null,
         });
-        showFlash("Recurrente actualizado");
+        showFlash(t("recurrentes.actualizado"));
       } else {
         const body: Record<string, unknown> = {
           nombre:       data.nombre,
@@ -126,12 +128,12 @@ export function NuevoRecurrenteSheet({ open, onClose, recurrente }: Props) {
           body.dia_mes = data.dia_mes;
         }
         await crear.mutateAsync(body);
-        showFlash("Recurrente creado");
+        showFlash(t("recurrentes.creado"));
       }
       reset();
       onClose();
     } catch {
-      showFlash("Error al guardar", "error");
+      showFlash(t("common.error"), "error");
     }
   }
 
@@ -140,20 +142,23 @@ export function NuevoRecurrenteSheet({ open, onClose, recurrente }: Props) {
   return (
     <AnimatePresence>
       {open && (
-        <>
+        <motion.div
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+          className="fixed inset-0 bg-black/20 backdrop-blur-md z-50 flex items-center justify-center p-4"
+          onClick={onClose}
+        >
           <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/40 z-40" onClick={onClose}
-          />
-          <motion.div
-            initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
-            transition={{ type: "spring", damping: 30, stiffness: 300 }}
-            className="fixed bottom-0 left-0 right-0 z-50 bg-surface rounded-t-3xl max-h-[90vh] overflow-y-auto"
+            initial={{ opacity: 0, scale: 0.96, y: 8 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.96, y: 8 }}
+            transition={{ type: "spring", damping: 28, stiffness: 380 }}
+            className="w-full max-w-md bg-surface rounded-3xl max-h-[90vh] overflow-y-auto shadow-[var(--shadow-floating)]"
+            onClick={(e) => e.stopPropagation()}
           >
             <form onSubmit={handleSubmit(onSubmit)} className="p-5 space-y-4">
               <div className="flex items-center justify-between">
                 <h2 className="font-bold text-lg text-fg">
-                  {editando ? "Editar recurrente" : "Nuevo recurrente"}
+                  {editando ? t("recurrentes.editar") : t("recurrentes.nuevo")}
                 </h2>
                 <button type="button" onClick={onClose} className="w-8 h-8 rounded-full bg-surface-2 flex items-center justify-center">
                   <X className="w-4 h-4 text-fg" />
@@ -163,17 +168,17 @@ export function NuevoRecurrenteSheet({ open, onClose, recurrente }: Props) {
               {/* Toggle ingreso/gasto — solo al crear */}
               {!editando && (
                 <div className="flex bg-surface-2 rounded-2xl p-1 gap-1">
-                  {(["gasto", "ingreso"] as const).map((t) => (
+                  {(["gasto", "ingreso"] as const).map((tp) => (
                     <button
-                      key={t}
+                      key={tp}
                       type="button"
-                      onClick={() => handleTipo(t)}
+                      onClick={() => handleTipo(tp)}
                       className={clsx(
                         "flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all",
-                        tipo === t ? "bg-ink text-white shadow" : "text-fg-muted"
+                        tipo === tp ? "bg-ink text-white shadow" : "text-fg-muted"
                       )}
                     >
-                      {t === "gasto" ? "💸 Gasto" : "💰 Ingreso"}
+                      {tp === "gasto" ? t("movimientos.gasto") : t("movimientos.ingreso")}
                     </button>
                   ))}
                 </div>
@@ -193,7 +198,7 @@ export function NuevoRecurrenteSheet({ open, onClose, recurrente }: Props) {
               <div>
                 <input
                   {...register("nombre")}
-                  placeholder="Concepto (ej. Alquiler, Netflix)"
+                  placeholder={t("recurrentes.concepto_placeholder")}
                   className="w-full bg-surface-2 rounded-xl px-4 py-3 text-sm text-fg placeholder:text-fg-subtle focus:outline-none focus:ring-2 focus:ring-ink/20"
                 />
                 {errors.nombre && <p className="text-xs text-red-500 mt-1">{errors.nombre.message}</p>}
@@ -205,9 +210,9 @@ export function NuevoRecurrenteSheet({ open, onClose, recurrente }: Props) {
                   {...register("cuenta_id")}
                   className="w-full bg-surface-2 rounded-xl px-4 py-3 text-sm text-fg appearance-none focus:outline-none pr-9"
                 >
-                  <option value="">Elige una cuenta</option>
+                  <option value="">{t("recurrentes.elige_cuenta")}</option>
                   {cuentas.map((c) => (
-                    <option key={c.id} value={c.id}>{c.emoji ?? "🏦"} {c.nombre} ({c.moneda})</option>
+                    <option key={c.id} value={c.id}>{c.nombre} ({c.moneda})</option>
                   ))}
                 </select>
                 <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-fg-subtle pointer-events-none" />
@@ -222,10 +227,10 @@ export function NuevoRecurrenteSheet({ open, onClose, recurrente }: Props) {
                     onChange={(e) => setValue("categoria_id", e.target.value)}
                     className="w-full bg-surface-2 rounded-xl px-4 py-3 text-sm text-fg appearance-none focus:outline-none pr-9"
                   >
-                    <option value="">Sin categoría</option>
+                    <option value="">{t("common.sin_categoria")}</option>
                     {categorias.map((cat) => (
                       <option key={cat.id} value={cat.id}>
-                        {cat.emoji ?? "📦"} {cat.nombre}
+                        {cat.nombre}
                       </option>
                     ))}
                   </select>
@@ -235,7 +240,7 @@ export function NuevoRecurrenteSheet({ open, onClose, recurrente }: Props) {
 
               {/* Frecuencia */}
               <div>
-                <p className="text-xs text-fg-muted mb-2 font-medium">Frecuencia</p>
+                <p className="text-xs text-fg-muted mb-2 font-medium">{t("common.frecuencia")}</p>
                 <div className="grid grid-cols-2 gap-2">
                   {FRECUENCIAS.map((f) => (
                     <button
@@ -247,8 +252,7 @@ export function NuevoRecurrenteSheet({ open, onClose, recurrente }: Props) {
                         frecuencia === f.value ? "bg-ink text-white" : "bg-surface-2 text-fg"
                       )}
                     >
-                      <span>{f.icon}</span>
-                      <span>{f.label}</span>
+                      {f.label}
                     </button>
                   ))}
                 </div>
@@ -257,14 +261,14 @@ export function NuevoRecurrenteSheet({ open, onClose, recurrente }: Props) {
               {/* Día del mes (solo mensual) */}
               {frecuencia === "mensual" && (
                 <div>
-                  <p className="text-xs text-fg-muted mb-1 font-medium">Día del mes (1-28)</p>
+                  <p className="text-xs text-fg-muted mb-1 font-medium">{t("recurrentes.dia_mes")}</p>
                   <input
                     type="number"
                     min={1}
                     max={28}
                     inputMode="numeric"
                     defaultValue={recurrente?.dia_mes ?? undefined}
-                    placeholder="Ej. 1 (por defecto el día de la fecha inicio)"
+                    placeholder={t("recurrentes.dia_mes_hint")}
                     className="w-full bg-surface-2 rounded-xl px-4 py-3 text-sm text-fg focus:outline-none"
                     onChange={(e) => {
                       const v = parseInt(e.target.value);
@@ -277,7 +281,7 @@ export function NuevoRecurrenteSheet({ open, onClose, recurrente }: Props) {
               {/* Primera ejecución — solo al crear */}
               {!editando && (
                 <div>
-                  <p className="text-xs text-fg-muted mb-1 font-medium">Primera ejecución</p>
+                  <p className="text-xs text-fg-muted mb-1 font-medium">{t("recurrentes.primera_ejecucion")}</p>
                   <div className="overflow-hidden">
                     <input
                       {...register("fecha_inicio")}
@@ -293,11 +297,11 @@ export function NuevoRecurrenteSheet({ open, onClose, recurrente }: Props) {
                 disabled={isPending}
                 className="w-full bg-ink text-white rounded-2xl py-4 font-semibold text-base active:scale-95 transition-transform disabled:opacity-60"
               >
-                {isPending ? "Guardando…" : editando ? "Guardar cambios" : "Crear recurrente"}
+                {isPending ? t("common.guardando") : editando ? t("common.guardar_cambios") : t("recurrentes.crear")}
               </button>
             </form>
           </motion.div>
-        </>
+        </motion.div>
       )}
     </AnimatePresence>
   );

@@ -1,8 +1,9 @@
-import { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Pause, Play, Trash2 } from "lucide-react";
+import { Pause, Play, Pencil, Trash2, ArrowDownLeft, ArrowUpRight, RefreshCw } from "lucide-react";
 import { clsx } from "clsx";
+import { useTranslation } from "react-i18next";
 import { formatCurrency, formatDate } from "@/lib/format";
 import type { Recurrente } from "@/types/api";
 import { useUsuarioStore } from "@/stores/usuario";
@@ -14,17 +15,9 @@ interface Props {
   onDelete?: (r: Recurrente) => void;
 }
 
-const FRECUENCIA_LABEL: Record<string, string> = {
-  diario:         "Cada día",
-  semanal:        "Cada semana",
-  cada_4_semanas: "Cada 4 semanas",
-  mensual:        "Cada mes",
-  anual:          "Cada año",
-};
-
-const TIPO_ICON: Record<string, string> = {
-  ingreso: "💰",
-  gasto:   "💸",
+const TIPO_ICON: Record<string, React.ReactNode> = {
+  ingreso: <ArrowDownLeft className="w-5 h-5 text-fg-muted" />,
+  gasto:   <ArrowUpRight  className="w-5 h-5 text-fg-muted" />,
 };
 
 const MAX_SWIPE = 88;
@@ -32,6 +25,7 @@ const TRIGGER   = 60;
 const LOCK_PX   = 8;
 
 function ConfirmDelete({ nombre, onConfirm, onCancel }: { nombre: string; onConfirm: () => void; onCancel: () => void }) {
+  const { t } = useTranslation();
   return createPortal(
     <AnimatePresence>
       <motion.div
@@ -49,14 +43,14 @@ function ConfirmDelete({ nombre, onConfirm, onCancel }: { nombre: string; onConf
           onClick={(e) => e.stopPropagation()}
         >
           <div className="w-10 h-1 bg-border-ui rounded-full mx-auto mb-5" />
-          <p className="font-bold text-fg text-base text-center mb-1">¿Eliminar este recurrente?</p>
-          <p className="text-fg-muted text-sm text-center mb-6">"{nombre}" se archivará definitivamente.</p>
+          <p className="font-bold text-fg text-base text-center mb-1">{t("recurrentes.eliminar_confirm")}</p>
+          <p className="text-fg-muted text-sm text-center mb-6">"{nombre}" {t("recurrentes.eliminado_desc")}</p>
           <div className="flex gap-3">
             <button onClick={onCancel} className="flex-1 py-3.5 rounded-2xl bg-surface-2 text-fg font-semibold text-sm active:scale-95 transition-transform">
-              Cancelar
+              {t("common.cancelar")}
             </button>
             <button onClick={onConfirm} className="flex-1 py-3.5 rounded-2xl bg-[#FF5C5C] text-white font-semibold text-sm active:scale-95 transition-transform">
-              Sí, eliminar
+              {t("common.si_eliminar")}
             </button>
           </div>
         </motion.div>
@@ -67,7 +61,18 @@ function ConfirmDelete({ nombre, onConfirm, onCancel }: { nombre: string; onConf
 }
 
 export function RecurrenteItem({ recurrente: r, onEdit, onToggle, onDelete }: Props) {
+  const { t } = useTranslation();
   const discreto = useUsuarioStore((s) => s.usuario?.ocultar_importes ?? false);
+
+  const [isDesktop, setIsDesktop] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 768px)");
+    setIsDesktop(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setIsDesktop(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+
   const wrapRef    = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const startX     = useRef(0);
@@ -75,6 +80,14 @@ export function RecurrenteItem({ recurrente: r, onEdit, onToggle, onDelete }: Pr
   const currX      = useRef(0);
   const locked     = useRef<"h" | "v" | null>(null);
   const moved      = useRef(false);
+
+  const frecuenciaLabel: Record<string, string> = {
+    diario:         t("recurrentes.freq_dia"),
+    semanal:        t("recurrentes.freq_semana"),
+    cada_4_semanas: t("recurrentes.freq_4semanas"),
+    mensual:        t("recurrentes.freq_mes"),
+    anual:          t("recurrentes.freq_anio"),
+  };
 
   const [gone,        setGone]        = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -147,48 +160,50 @@ export function RecurrenteItem({ recurrente: r, onEdit, onToggle, onDelete }: Pr
     <>
       <div ref={wrapRef} className="relative overflow-hidden rounded-2xl shadow-[var(--shadow-card)]">
 
-        {/* Toggle background — left (swipe right) */}
-        <div className={clsx(
-          "absolute inset-y-0 left-0 w-1/2 flex items-center pl-5 rounded-l-2xl",
-          r.activo ? "bg-amber-400" : "bg-[#5BAA1F]"
-        )}>
-          <div className="flex flex-col items-center gap-0.5">
-            {r.activo
-              ? <Pause className="w-5 h-5 text-white" />
-              : <Play  className="w-5 h-5 text-white" />
-            }
-            <span className="text-[10px] font-bold text-white uppercase tracking-wide">
-              {r.activo ? "Pausar" : "Reanudar"}
-            </span>
-          </div>
-        </div>
+        {/* Swipe backgrounds — solo en móvil */}
+        {!isDesktop && (
+          <>
+            <div className={clsx(
+              "absolute inset-y-0 left-0 w-1/2 flex items-center pl-5 rounded-l-2xl",
+              r.activo ? "bg-amber-400" : "bg-[#5BAA1F]"
+            )}>
+              <div className="flex flex-col items-center gap-0.5">
+                {r.activo
+                  ? <Pause className="w-5 h-5 text-white" />
+                  : <Play  className="w-5 h-5 text-white" />
+                }
+                <span className="text-[10px] font-bold text-white uppercase tracking-wide">
+                  {r.activo ? t("common.pausar") : t("common.reanudar")}
+                </span>
+              </div>
+            </div>
+            <div className="absolute inset-y-0 right-0 w-1/2 flex items-center justify-end pr-5 bg-[#FF5C5C] rounded-r-2xl">
+              <div className="flex flex-col items-center gap-0.5">
+                <Trash2 className="w-5 h-5 text-white" />
+                <span className="text-[10px] font-bold text-white uppercase tracking-wide">{t("common.eliminar")}</span>
+              </div>
+            </div>
+          </>
+        )}
 
-        {/* Delete background — right (swipe left) */}
-        <div className="absolute inset-y-0 right-0 w-1/2 flex items-center justify-end pr-5 bg-[#FF5C5C] rounded-r-2xl">
-          <div className="flex flex-col items-center gap-0.5">
-            <Trash2 className="w-5 h-5 text-white" />
-            <span className="text-[10px] font-bold text-white uppercase tracking-wide">Eliminar</span>
-          </div>
-        </div>
-
-        {/* Swipeable card content */}
+        {/* Card content */}
         <div
           ref={contentRef}
           className="relative z-10 bg-surface rounded-2xl px-4 py-3 flex items-center gap-3"
           style={{ touchAction: "pan-y", WebkitUserSelect: "none", userSelect: "none" }}
-          onPointerDown={onDown}
-          onPointerMove={onMove}
-          onPointerUp={onUp}
-          onPointerCancel={onCancel}
+          onPointerDown={isDesktop ? undefined : onDown}
+          onPointerMove={isDesktop ? undefined : onMove}
+          onPointerUp={isDesktop ? undefined : onUp}
+          onPointerCancel={isDesktop ? undefined : onCancel}
           onContextMenu={(e) => e.preventDefault()}
         >
-          <div className="w-10 h-10 rounded-xl bg-surface-2 flex items-center justify-center text-xl flex-shrink-0 pointer-events-none">
-            {TIPO_ICON[r.tipo] ?? "🔁"}
+          <div className="w-10 h-10 rounded-xl bg-surface-2 flex items-center justify-center flex-shrink-0 pointer-events-none">
+            {TIPO_ICON[r.tipo] ?? <RefreshCw className="w-5 h-5 text-fg-muted" />}
           </div>
           <div className="flex-1 min-w-0 pointer-events-none">
             <p className="font-semibold text-fg text-sm truncate">{r.nombre}</p>
             <p className="text-xs text-fg-muted">
-              {FRECUENCIA_LABEL[r.frecuencia] ?? r.frecuencia} · próximo: {formatDate(r.proxima_ejecucion)}
+              {frecuenciaLabel[r.frecuencia] ?? r.frecuencia} · {t("recurrentes.proximo")}: {formatDate(r.proxima_ejecucion)}
             </p>
           </div>
           <p className={clsx(
@@ -197,6 +212,38 @@ export function RecurrenteItem({ recurrente: r, onEdit, onToggle, onDelete }: Pr
           )}>
             {discreto ? "••••" : `${r.tipo === "ingreso" ? "+" : "-"}${formatCurrency(r.importe, r.moneda)}`}
           </p>
+
+          {/* Botones inline — solo en escritorio */}
+          {isDesktop && (
+            <div className="flex items-center gap-1 ml-1">
+              <button
+                type="button"
+                onClick={() => onToggle?.(r)}
+                className={clsx(
+                  "w-8 h-8 rounded-lg flex items-center justify-center transition-colors",
+                  r.activo
+                    ? "bg-surface-2 text-fg-muted hover:bg-amber-400 hover:text-white"
+                    : "bg-surface-2 text-fg-muted hover:bg-[#5BAA1F] hover:text-white"
+                )}
+              >
+                {r.activo ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
+              </button>
+              <button
+                type="button"
+                onClick={() => onEdit?.(r)}
+                className="w-8 h-8 rounded-lg bg-surface-2 flex items-center justify-center hover:bg-ink hover:text-white transition-colors"
+              >
+                <Pencil className="w-3.5 h-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowConfirm(true)}
+                className="w-8 h-8 rounded-lg bg-surface-2 flex items-center justify-center hover:bg-[#FF5C5C] hover:text-white transition-colors"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
         </div>
       </div>
 

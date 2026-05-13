@@ -1,5 +1,6 @@
 import { TrendingUp, AlertTriangle, RefreshCw, Repeat, Coffee, Zap } from "lucide-react";
 import { clsx } from "clsx";
+import { useTranslation } from "react-i18next";
 import { useInsights } from "@/hooks/useInsights";
 import type { FactorSalud, InsightAnomalia } from "@/types/api";
 import { formatCurrency } from "@/lib/format";
@@ -7,6 +8,7 @@ import { formatCurrency } from "@/lib/format";
 // ── SaludScore ────────────────────────────────────────────────────────────────
 
 function SaludScore({ score, nivel, factores }: { score: number; nivel: string; factores: FactorSalud[] }) {
+  const { t } = useTranslation();
   const COLOR: Record<string, string> = {
     excelente: "text-green-600",
     bueno: "text-accent-positive",
@@ -31,7 +33,7 @@ function SaludScore({ score, nivel, factores }: { score: number; nivel: string; 
 
   return (
     <div className={clsx("rounded-2xl p-4 shadow-sm", BG[nivel] ?? "bg-gray-50")}>
-      <h3 className="text-xs font-semibold text-fg/40 uppercase tracking-wide mb-3">Salud financiera</h3>
+      <h3 className="text-xs font-semibold text-fg/40 uppercase tracking-wide mb-3">{t("insights.salud_financiera")}</h3>
       <div className="flex items-center gap-4">
         {/* Arco SVG */}
         <div className="relative w-32 h-16 flex-shrink-0">
@@ -52,7 +54,7 @@ function SaludScore({ score, nivel, factores }: { score: number; nivel: string; 
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-end pb-1">
             <span className={clsx("text-2xl font-bold", COLOR[nivel])}>{score}</span>
-            <span className="text-xs text-fg/40 capitalize">{nivel}</span>
+            <span className="text-xs text-fg/40 capitalize">{t(`insights.nivel_${nivel}`, { defaultValue: nivel })}</span>
           </div>
         </div>
         {/* Factores */}
@@ -80,20 +82,21 @@ function SaludScore({ score, nivel, factores }: { score: number; nivel: string; 
 // ── Prediccion ────────────────────────────────────────────────────────────────
 
 function PrediccionCard({ datos }: { datos: Array<{ dias: number; fecha: string; saldo_proyectado: string }> }) {
+  const { t } = useTranslation();
   return (
     <div className="bg-surface rounded-2xl p-4 shadow-sm">
       <div className="flex items-center gap-2 mb-3">
         <TrendingUp size={16} className="text-accent-info" />
-        <h3 className="text-sm font-semibold text-fg">Predicción de saldo</h3>
+        <h3 className="text-sm font-semibold text-fg">{t("insights.prediccion_saldo")}</h3>
       </div>
       <div className="grid grid-cols-3 gap-2">
         {datos.map((d) => {
           const saldo = parseFloat(d.saldo_proyectado);
           return (
             <div key={d.dias} className="text-center bg-gray-50 rounded-xl p-2">
-              <p className="text-xs text-fg/40 mb-1">+{d.dias} días</p>
+              <p className="text-xs text-fg/40 mb-1">+{d.dias} {t("insights.dias")}</p>
               <p className={clsx("text-sm font-bold", saldo >= 0 ? "text-fg" : "text-red-500")}>
-                {saldo.toLocaleString("es-ES", { style: "currency", currency: "EUR", maximumFractionDigits: 0 })}
+                {saldo.toLocaleString(undefined, { style: "currency", currency: "EUR", maximumFractionDigits: 0 })}
               </p>
             </div>
           );
@@ -106,12 +109,13 @@ function PrediccionCard({ datos }: { datos: Array<{ dias: number; fecha: string;
 // ── SuscripcionesCard ─────────────────────────────────────────────────────────
 
 function SuscripcionesCard({ subs }: { subs: Array<{ concepto: string; importe_medio: string; moneda: string; num_ocurrencias: number }> }) {
+  const { t } = useTranslation();
   if (!subs.length) return null;
   return (
     <div className="bg-surface rounded-2xl p-4 shadow-sm">
       <div className="flex items-center gap-2 mb-3">
         <Repeat size={16} className="text-purple-500" />
-        <h3 className="text-sm font-semibold text-fg">Suscripciones detectadas</h3>
+        <h3 className="text-sm font-semibold text-fg">{t("insights.suscripciones")}</h3>
         <span className="ml-auto text-xs bg-purple-50 text-purple-600 px-2 py-0.5 rounded-full">{subs.length}</span>
       </div>
       <div className="space-y-2">
@@ -120,13 +124,13 @@ function SuscripcionesCard({ subs }: { subs: Array<{ concepto: string; importe_m
             <p className="text-sm text-fg truncate">{s.concepto}</p>
             <div className="text-right flex-shrink-0 ml-2">
               <p className="text-sm font-semibold text-fg">{formatCurrency(s.importe_medio, s.moneda)}/mes</p>
-              <p className="text-xs text-fg/40">{s.num_ocurrencias} pagos</p>
+              <p className="text-xs text-fg/40">{s.num_ocurrencias} {t("insights.pagos")}</p>
             </div>
           </div>
         ))}
       </div>
       <p className="text-xs text-fg/30 mt-3">
-        Total mensual: {subs.reduce((a, s) => a + parseFloat(s.importe_medio), 0).toLocaleString("es-ES", { style: "currency", currency: "EUR" })}
+        {t("insights.total_mensual")} {subs.reduce((a, s) => a + parseFloat(s.importe_medio), 0).toLocaleString(undefined, { style: "currency", currency: "EUR" })}
       </p>
     </div>
   );
@@ -135,12 +139,13 @@ function SuscripcionesCard({ subs }: { subs: Array<{ concepto: string; importe_m
 // ── HormigaCard ───────────────────────────────────────────────────────────────
 
 function HormigaCard({ items }: { items: Array<{ concepto: string; num_ocurrencias_mes: number; total_mes: string; moneda: string }> }) {
+  const { t } = useTranslation();
   if (!items.length) return null;
   return (
     <div className="bg-surface rounded-2xl p-4 shadow-sm">
       <div className="flex items-center gap-2 mb-3">
         <Coffee size={16} className="text-amber-500" />
-        <h3 className="text-sm font-semibold text-fg">Gastos hormiga</h3>
+        <h3 className="text-sm font-semibold text-fg">{t("insights.gastos_hormiga")}</h3>
         <span className="ml-auto text-xs bg-amber-50 text-amber-600 px-2 py-0.5 rounded-full">{items.length}</span>
       </div>
       <div className="space-y-2">
@@ -148,7 +153,7 @@ function HormigaCard({ items }: { items: Array<{ concepto: string; num_ocurrenci
           <div key={item.concepto} className="flex items-center justify-between">
             <div>
               <p className="text-sm text-fg">{item.concepto}</p>
-              <p className="text-xs text-fg/40">{item.num_ocurrencias_mes}× este mes</p>
+              <p className="text-xs text-fg/40">{item.num_ocurrencias_mes}{t("insights.veces_mes")}</p>
             </div>
             <p className="text-sm font-semibold text-amber-600">{formatCurrency(item.total_mes, item.moneda)}/mes</p>
           </div>
@@ -161,12 +166,13 @@ function HormigaCard({ items }: { items: Array<{ concepto: string; num_ocurrenci
 // ── AnomaliaCard ──────────────────────────────────────────────────────────────
 
 function AnomaliaCard({ anomalias }: { anomalias: InsightAnomalia[] }) {
+  const { t } = useTranslation();
   if (!anomalias.length) return null;
   return (
     <div className="bg-surface rounded-2xl p-4 shadow-sm border border-red-100">
       <div className="flex items-center gap-2 mb-3">
         <AlertTriangle size={16} className="text-red-400" />
-        <h3 className="text-sm font-semibold text-fg">Gastos inusuales</h3>
+        <h3 className="text-sm font-semibold text-fg">{t("insights.gastos_inusuales")}</h3>
         <span className="ml-auto text-xs bg-red-50 text-red-500 px-2 py-0.5 rounded-full">{anomalias.length}</span>
       </div>
       <div className="space-y-2">
@@ -174,7 +180,7 @@ function AnomaliaCard({ anomalias }: { anomalias: InsightAnomalia[] }) {
           <div key={a.movimiento_id ?? a.concepto} className="flex items-center justify-between">
             <div>
               <p className="text-sm text-fg">{a.concepto}</p>
-              <p className="text-xs text-fg/40">{new Date(a.fecha + "T00:00:00").toLocaleDateString("es-ES")} · {parseFloat(a.factor).toFixed(1)}× sobre la media</p>
+              <p className="text-xs text-fg/40">{new Date(a.fecha + "T00:00:00").toLocaleDateString()} · {parseFloat(a.factor).toFixed(1)}{t("insights.sobre_media")}</p>
             </div>
             <p className="text-sm font-semibold text-red-500">{formatCurrency(a.importe, a.moneda)}</p>
           </div>
@@ -187,6 +193,7 @@ function AnomaliaCard({ anomalias }: { anomalias: InsightAnomalia[] }) {
 // ── Insights ──────────────────────────────────────────────────────────────────
 
 export function Insights() {
+  const { t } = useTranslation();
   const { data, isLoading, refetch, isFetching } = useInsights();
 
   return (
@@ -194,8 +201,8 @@ export function Insights() {
       <div className="bg-ink px-4 pt-10 pb-5 rounded-b-3xl mb-4">
         <div className="flex items-center justify-between max-w-2xl mx-auto">
           <div>
-            <h1 className="text-white text-xl font-bold">Insights</h1>
-            <p className="text-white/50 text-xs mt-0.5">Análisis automático de tus finanzas</p>
+            <h1 className="text-white text-xl font-bold">{t("insights.titulo")}</h1>
+            <p className="text-white/50 text-xs mt-0.5">{t("insights.descripcion")}</p>
           </div>
           <button
             onClick={() => refetch()}
@@ -211,11 +218,11 @@ export function Insights() {
 
       <div className="px-4 max-w-2xl mx-auto space-y-3">
         {isLoading ? (
-          <div className="text-center py-12 text-fg/40 text-sm">Analizando tus finanzas...</div>
+          <div className="text-center py-12 text-fg/40 text-sm">{t("insights.analizando")}</div>
         ) : !data ? (
           <div className="text-center py-12">
             <Zap size={36} className="mx-auto text-fg/20 mb-3" />
-            <p className="text-fg/50 text-sm">Añade movimientos para ver insights</p>
+            <p className="text-fg/50 text-sm">{t("insights.sin_datos")}</p>
           </div>
         ) : (
           <>
@@ -226,7 +233,7 @@ export function Insights() {
             <HormigaCard items={data.gastos_hormiga} />
             {!data.suscripciones.length && !data.gastos_hormiga.length && !data.anomalias.length && (
               <div className="text-center py-6 text-fg/30 text-xs">
-                Sin patrones detectados todavía. Añade más movimientos para análisis más ricos.
+                {t("insights.sin_patrones")}
               </div>
             )}
           </>

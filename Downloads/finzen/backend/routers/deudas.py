@@ -1,3 +1,4 @@
+import calendar
 from datetime import date, datetime
 from decimal import Decimal
 from typing import List
@@ -14,6 +15,12 @@ from models.workspace import Workspace
 from schemas.deuda import CuotaOut, DeudaCreate, DeudaOut, DeudaUpdate
 
 router = APIRouter(prefix="/deudas", tags=["deudas"])
+
+
+def _dia_seguro(año: int, mes: int, dia: int) -> date:
+    """Devuelve la fecha con el día recortado al último día válido del mes."""
+    ultimo = calendar.monthrange(año, mes)[1]
+    return date(año, mes, min(dia, ultimo))
 
 
 def _cuotas_frances(
@@ -33,9 +40,10 @@ def _cuotas_frances(
 
     saldo = importe
     cuotas = []
-    fecha = fecha_inicio.replace(day=dia_cuota)
+    fecha = _dia_seguro(fecha_inicio.year, fecha_inicio.month, dia_cuota)
     if fecha <= fecha_inicio:
-        fecha = (fecha_inicio + relativedelta(months=1)).replace(day=dia_cuota)
+        siguiente = fecha_inicio + relativedelta(months=1)
+        fecha = _dia_seguro(siguiente.year, siguiente.month, dia_cuota)
 
     for i in range(1, num_cuotas + 1):
         intereses = (saldo * tasa_mensual).quantize(Decimal("0.01"))
@@ -49,7 +57,8 @@ def _cuotas_frances(
             intereses=str(intereses),
             saldo_pendiente=str(saldo.quantize(Decimal("0.01"))),
         ))
-        fecha = (fecha + relativedelta(months=1)).replace(day=dia_cuota)
+        siguiente = fecha + relativedelta(months=1)
+        fecha = _dia_seguro(siguiente.year, siguiente.month, dia_cuota)
 
     return cuotas
 
@@ -65,7 +74,22 @@ def listar(
             Deuda.archivado_en == None,  # noqa: E711
         ).order_by(Deuda.creado_en)
     ).all()
-    return [DeudaOut.from_orm(d) for d in deudas]
+
+    hoy = date.today()
+    resultado = []
+    for d in deudas:
+        saldo_pendiente = None
+        if d.num_cuotas:
+            cuotas = _cuotas_frances(
+                d.importe_total, d.tasa_interes_anual, d.num_cuotas, d.fecha_inicio, d.dia_cuota
+            )
+            pagadas = [c for c in cuotas if c.fecha <= hoy]
+            if pagadas:
+                saldo_pendiente = pagadas[-1].saldo_pendiente
+            else:
+                saldo_pendiente = str(d.importe_total)
+        resultado.append(DeudaOut.from_orm(d, saldo_pendiente=saldo_pendiente))
+    return resultado
 
 
 @router.post("", response_model=DeudaOut, status_code=201)

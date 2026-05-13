@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, ChevronDown } from "lucide-react";
 import { useForm } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useCategorias } from "@/hooks/useCategorias";
@@ -21,12 +22,7 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>;
 
-const PERIODOS = [
-  { value: "semanal",    label: "Semanal" },
-  { value: "mensual",    label: "Mensual" },
-  { value: "trimestral", label: "Trimestral" },
-  { value: "anual",      label: "Anual" },
-] as const;
+const PERIODO_VALUES = ["semanal", "mensual", "trimestral", "anual"] as const;
 
 interface Props {
   open: boolean;
@@ -35,12 +31,18 @@ interface Props {
 }
 
 export function NuevoPresupuestoSheet({ open, onClose, presupuesto }: Props) {
+  const { t } = useTranslation();
   const workspace = useWorkspaceStore((s) => s.workspace);
   const { data: categorias = [] } = useCategorias("gasto");
   const crear     = useCrearPresupuesto();
   const actualizar = useActualizarPresupuesto();
 
   const editando = !!presupuesto;
+
+  const PERIODOS = PERIODO_VALUES.map((v) => ({
+    value: v,
+    label: t(`presupuestos.periodo_${v === "trimestral" ? "trimestral" : v === "anual" ? "anual" : v === "semanal" ? "semanal" : "mensual"}`),
+  }));
 
   const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -51,7 +53,6 @@ export function NuevoPresupuestoSheet({ open, onClose, presupuesto }: Props) {
   const modo       = watch("modo");
   const categoriaId = watch("categoria_id");
 
-  // Pre-fill when editing
   useEffect(() => {
     if (open && presupuesto) {
       reset({
@@ -78,7 +79,7 @@ export function NuevoPresupuestoSheet({ open, onClose, presupuesto }: Props) {
           modo:          data.modo,
           categoria_ids: catIds,
         });
-        showFlash("Presupuesto actualizado");
+        showFlash(t("presupuestos.actualizado"));
       } else {
         await crear.mutateAsync({
           nombre:        data.nombre,
@@ -89,11 +90,11 @@ export function NuevoPresupuestoSheet({ open, onClose, presupuesto }: Props) {
           categoria_ids: catIds,
           cuenta_ids:    [],
         });
-        showFlash("Presupuesto creado");
+        showFlash(t("presupuestos.creado"));
       }
       onClose();
     } catch {
-      showFlash("Error al guardar", "error");
+      showFlash(t("common.error"), "error");
     }
   }
 
@@ -102,20 +103,23 @@ export function NuevoPresupuestoSheet({ open, onClose, presupuesto }: Props) {
   return (
     <AnimatePresence>
       {open && (
-        <>
+        <motion.div
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+          className="fixed inset-0 bg-black/20 backdrop-blur-md z-50 flex items-center justify-center p-4"
+          onClick={onClose}
+        >
           <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/40 z-40" onClick={onClose}
-          />
-          <motion.div
-            initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
-            transition={{ type: "spring", damping: 30, stiffness: 300 }}
-            className="fixed bottom-0 left-0 right-0 z-50 bg-surface rounded-t-3xl max-h-[90vh] overflow-y-auto"
+            initial={{ opacity: 0, scale: 0.96, y: 8 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.96, y: 8 }}
+            transition={{ type: "spring", damping: 28, stiffness: 380 }}
+            className="w-full max-w-md bg-surface rounded-3xl max-h-[90vh] overflow-y-auto shadow-[var(--shadow-floating)]"
+            onClick={(e) => e.stopPropagation()}
           >
             <form onSubmit={handleSubmit(onSubmit)} className="p-5 space-y-4">
               <div className="flex items-center justify-between">
                 <h2 className="font-bold text-lg text-fg">
-                  {editando ? "Editar presupuesto" : "Nuevo presupuesto"}
+                  {editando ? t("presupuestos.editar") : t("presupuestos.nuevo")}
                 </h2>
                 <button type="button" onClick={onClose} className="w-8 h-8 rounded-full bg-surface-2 flex items-center justify-center">
                   <X className="w-4 h-4 text-fg" />
@@ -126,7 +130,7 @@ export function NuevoPresupuestoSheet({ open, onClose, presupuesto }: Props) {
               <div>
                 <input
                   {...register("nombre")}
-                  placeholder="Nombre (ej. Comida)"
+                  placeholder={t("presupuestos.nombre_placeholder")}
                   className="w-full bg-surface-2 rounded-xl px-4 py-3 text-sm text-fg placeholder:text-fg-subtle focus:outline-none focus:ring-2 focus:ring-ink/20"
                 />
                 {errors.nombre && <p className="text-xs text-red-500 mt-1">{errors.nombre.message}</p>}
@@ -144,7 +148,7 @@ export function NuevoPresupuestoSheet({ open, onClose, presupuesto }: Props) {
 
               {/* Periodo */}
               <div>
-                <p className="text-xs text-fg-muted mb-2 font-medium">Periodo</p>
+                <p className="text-xs text-fg-muted mb-2 font-medium">{t("common.periodo")}</p>
                 <div className="flex gap-2">
                   {PERIODOS.map((p) => (
                     <button
@@ -164,7 +168,7 @@ export function NuevoPresupuestoSheet({ open, onClose, presupuesto }: Props) {
 
               {/* Modo */}
               <div>
-                <p className="text-xs text-fg-muted mb-2 font-medium">Modo</p>
+                <p className="text-xs text-fg-muted mb-2 font-medium">{t("common.modo")}</p>
                 <div className="flex bg-surface-2 rounded-2xl p-1 gap-1">
                   {(["estricto", "flexible"] as const).map((m) => (
                     <button
@@ -176,30 +180,30 @@ export function NuevoPresupuestoSheet({ open, onClose, presupuesto }: Props) {
                         modo === m ? "bg-ink text-white shadow" : "text-fg-muted"
                       )}
                     >
-                      {m === "estricto" ? "📅 Estricto" : "🔄 Flexible"}
+                      {m === "estricto" ? t("presupuestos.modo_estricto") : t("presupuestos.modo_flexible")}
                     </button>
                   ))}
                 </div>
                 <p className="text-xs text-fg-muted mt-1">
                   {modo === "estricto"
-                    ? "Se resetea al inicio del periodo (ej. 1 de cada mes)"
-                    : "Ventana deslizante de los últimos N días"}
+                    ? t("presupuestos.modo_estricto_desc")
+                    : t("presupuestos.modo_flexible_desc")}
                 </p>
               </div>
 
               {/* Categoría */}
               {categorias.length > 0 && (
                 <div>
-                  <p className="text-xs text-fg-muted mb-2 font-medium">Categoría</p>
+                  <p className="text-xs text-fg-muted mb-2 font-medium">{t("common.categoria")}</p>
                   <div className="relative">
                     <select
                       {...register("categoria_id")}
                       className="w-full appearance-none bg-surface-2 rounded-xl px-4 py-3 text-sm text-fg focus:outline-none pr-9"
                     >
-                      <option value="">Todas las categorías</option>
+                      <option value="">{t("common.todas_categorias")}</option>
                       {categorias.map((cat) => (
                         <option key={cat.id} value={cat.id}>
-                          {cat.emoji ?? "📦"} {cat.nombre}
+                          {cat.nombre}
                         </option>
                       ))}
                     </select>
@@ -211,7 +215,7 @@ export function NuevoPresupuestoSheet({ open, onClose, presupuesto }: Props) {
                       onClick={() => setValue("categoria_id", "")}
                       className="mt-1.5 text-xs text-fg-muted underline"
                     >
-                      Quitar categoría
+                      {t("presupuestos.quitar_categoria")}
                     </button>
                   )}
                 </div>
@@ -222,11 +226,11 @@ export function NuevoPresupuestoSheet({ open, onClose, presupuesto }: Props) {
                 disabled={isPending}
                 className="w-full bg-ink text-white rounded-2xl py-4 font-semibold text-base active:scale-95 transition-transform disabled:opacity-60"
               >
-                {isPending ? "Guardando…" : editando ? "Guardar cambios" : "Crear presupuesto"}
+                {isPending ? t("common.guardando") : editando ? t("common.guardar_cambios") : t("presupuestos.crear")}
               </button>
             </form>
           </motion.div>
-        </>
+        </motion.div>
       )}
     </AnimatePresence>
   );

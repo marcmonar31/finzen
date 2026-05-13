@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Plus } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { Plus, BarChart3 } from "lucide-react";
 import { usePresupuestos, useArchivarPresupuesto } from "@/hooks/usePresupuestos";
 import { PresupuestoItem } from "@/components/PresupuestoItem";
 import { NuevoPresupuestoSheet } from "@/components/NuevoPresupuestoSheet";
@@ -7,6 +8,7 @@ import { showFlash } from "@/stores/flash";
 import type { Presupuesto } from "@/types/api";
 
 export function Presupuestos() {
+  const { t } = useTranslation();
   const [showNuevo,  setShowNuevo]  = useState(false);
   const [editando,   setEditando]   = useState<Presupuesto | null>(null);
   const { data: presupuestos = [], isLoading } = usePresupuestos();
@@ -18,9 +20,9 @@ export function Presupuestos() {
   async function handleArchivar(id: string) {
     try {
       await archivar.mutateAsync(id);
-      showFlash("Presupuesto eliminado", "delete");
+      showFlash(t("presupuestos.eliminado"), "delete");
     } catch {
-      showFlash("Error al eliminar", "error");
+      showFlash(t("common.error"), "error");
     }
   }
 
@@ -29,7 +31,7 @@ export function Presupuestos() {
       {/* Header — píldora flotante */}
       <div className="pt-10 px-4 pb-4">
         <div className="bg-ink rounded-3xl px-5 py-4 flex items-center justify-between shadow-[var(--shadow-floating)]">
-          <h1 className="text-white font-bold text-2xl">Presupuestos</h1>
+          <h1 className="text-white font-bold text-2xl">{t("presupuestos.titulo")}</h1>
           <button
             onClick={() => setShowNuevo(true)}
             className="w-9 h-9 rounded-full bg-[#C7FF6B] flex items-center justify-center active:scale-95 transition-transform"
@@ -57,16 +59,16 @@ export function Presupuestos() {
 
         {!isLoading && activos.length === 0 && (
           <div className="flex flex-col items-center justify-center py-16 text-center">
-            <div className="w-16 h-16 rounded-2xl bg-surface shadow-[var(--shadow-card)] flex items-center justify-center text-3xl mb-4">
-              📊
+            <div className="w-16 h-16 rounded-2xl bg-surface shadow-[var(--shadow-card)] flex items-center justify-center mb-4">
+              <BarChart3 className="w-8 h-8 text-fg-muted" />
             </div>
-            <p className="font-bold text-fg mb-1">Sin presupuestos</p>
-            <p className="text-fg-muted text-sm mb-5">Controla cuánto gastas en cada categoría</p>
+            <p className="font-bold text-fg mb-1">{t("presupuestos.sin_presupuestos")}</p>
+            <p className="text-fg-muted text-sm mb-5">{t("presupuestos.controla")}</p>
             <button
               onClick={() => setShowNuevo(true)}
               className="bg-ink text-white rounded-full px-6 py-2.5 text-sm font-semibold"
             >
-              Crear presupuesto
+              {t("presupuestos.crear")}
             </button>
           </div>
         )}
@@ -82,7 +84,7 @@ export function Presupuestos() {
 
         {inactivos.length > 0 && (
           <div className="pt-2">
-            <p className="text-xs font-semibold text-fg-muted uppercase tracking-wider mb-2">Pausados</p>
+            <p className="text-xs font-semibold text-fg-muted uppercase tracking-wider mb-2">{t("common.pausados")}</p>
             <div className="space-y-2 opacity-50">
               {inactivos.map((p) => (
                 <PresupuestoItem

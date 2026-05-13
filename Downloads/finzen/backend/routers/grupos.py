@@ -16,7 +16,7 @@ from models.usuario import Usuario
 from models.workspace import Workspace
 from schemas.grupo import (
     BalanceGrupoOut, GastoCompartidoCreate, GastoCompartidoOut, GastoRepartoOut,
-    GrupoCreate, GrupoMiembroOut, GrupoOut, LiquidacionCreate, LiquidacionOut,
+    GrupoCreate, GrupoMiembroOut, GrupoOut, GrupoUpdate, LiquidacionCreate, LiquidacionOut,
 )
 from services.conversion import convertir
 from services.liquidacion import calcular_balance_grupo, calcular_repartos, transferencias_optimas
@@ -196,6 +196,71 @@ def obtener_grupo(
         cerrado_en=grupo.cerrado_en,
         miembros=[_miembro_out(m, session) for m in todos_miembros],
     )
+
+
+@router.patch("/{grupo_id}", response_model=GrupoOut)
+def actualizar_grupo(
+    grupo_id: str,
+    body: GrupoUpdate,
+    current_user: Usuario = Depends(get_current_user),
+    session: Session = Depends(get_session),
+):
+    grupo = session.get(Grupo, grupo_id)
+    if not grupo or grupo.archivado_en:
+        raise HTTPException(404, "Grupo no encontrado")
+
+    miembro = session.exec(
+        select(GrupoMiembro).where(
+            GrupoMiembro.grupo_id == grupo_id,
+            GrupoMiembro.usuario_id == current_user.id,
+            GrupoMiembro.activo == True,  # noqa: E712
+        )
+    ).first()
+    if not miembro:
+        raise HTTPException(403, "No eres miembro de este grupo")
+
+    if body.nombre is not None:
+        grupo.nombre = body.nombre
+    if body.emoji is not None:
+        grupo.emoji = body.emoji
+
+    session.add(grupo)
+    session.commit()
+    session.refresh(grupo)
+
+    todos_miembros = session.exec(select(GrupoMiembro).where(GrupoMiembro.grupo_id == grupo_id)).all()
+    return GrupoOut(
+        id=grupo.id,
+        nombre=grupo.nombre,
+        emoji=grupo.emoji,
+        descripcion=grupo.descripcion,
+        moneda_principal=grupo.moneda_principal,
+        es_cuenta_real=grupo.es_cuenta_real,
+        cuenta_id=grupo.cuenta_id,
+        modo_reparto_default=grupo.modo_reparto_default,
+        creado_por=grupo.creado_por,
+        creado_en=grupo.creado_en,
+        cerrado_en=grupo.cerrado_en,
+        miembros=[_miembro_out(m, session) for m in todos_miembros],
+    )
+
+
+@router.delete("/{grupo_id}")
+def eliminar_grupo(
+    grupo_id: str,
+    current_user: Usuario = Depends(get_current_user),
+    session: Session = Depends(get_session),
+):
+    grupo = session.get(Grupo, grupo_id)
+    if not grupo or grupo.archivado_en:
+        raise HTTPException(404, "Grupo no encontrado")
+    if grupo.creado_por != current_user.id:
+        raise HTTPException(403, "Solo el creador puede eliminar el grupo")
+
+    grupo.archivado_en = datetime.utcnow()
+    session.add(grupo)
+    session.commit()
+    return {"ok": True}
 
 
 @router.post("/{grupo_id}/miembros")

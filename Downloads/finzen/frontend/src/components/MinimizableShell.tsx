@@ -5,10 +5,10 @@ import { useTranslation } from "react-i18next";
 import {
   Home, CreditCard, ClipboardList, ArrowLeftRight, BarChart3,
   Repeat, Target, Zap, Users, Handshake, Banknote,
-  TrendingUp, Lightbulb, Settings, type LucideIcon,
+  TrendingUp, Lightbulb, type LucideIcon,
 } from "lucide-react";
 
-const SECTION_IDS: { id: string; key: string; Icon: LucideIcon }[] = [
+const SECTION_IDS: { id: string; key: string; Icon: LucideIcon; beta?: boolean }[] = [
   { id: "dashboard",      key: "nav.dashboard",      Icon: Home },
   { id: "cuentas",        key: "nav.cuentas",        Icon: CreditCard },
   { id: "movimientos",    key: "nav.movimientos",    Icon: ClipboardList },
@@ -17,12 +17,11 @@ const SECTION_IDS: { id: string; key: string; Icon: LucideIcon }[] = [
   { id: "recurrentes",    key: "nav.recurrentes",    Icon: Repeat },
   { id: "objetivos",      key: "nav.objetivos",      Icon: Target },
   { id: "reglas",         key: "nav.reglas",         Icon: Zap },
-  { id: "amigos",         key: "nav.amigos",         Icon: Users },
-  { id: "grupos",         key: "nav.grupos",         Icon: Handshake },
+  { id: "amigos",         key: "nav.amigos",         Icon: Users,       beta: true },
+  { id: "grupos",         key: "nav.grupos",         Icon: Handshake,   beta: true },
   { id: "deudas",         key: "nav.deudas",         Icon: Banknote },
   { id: "inversiones",    key: "nav.inversiones",    Icon: TrendingUp },
   { id: "insights",       key: "nav.insights",       Icon: Lightbulb },
-  { id: "ajustes",        key: "nav.ajustes",        Icon: Settings },
 ];
 
 // ── Physics constants ────────────────────────────────────────────────────────
@@ -262,6 +261,9 @@ export function MinimizableShell({ children, currentSection, onSectionChange }: 
               >
                 <s.Icon className="w-4 h-4 flex-shrink-0" strokeWidth={2} />
                 <span>{s.label}</span>
+                {s.beta && (
+                  <span className="ml-auto text-[9px] font-bold tracking-wide bg-[#C7FF6B]/20 text-[#5BAA1F] rounded px-1.5 py-0.5">BETA</span>
+                )}
               </button>
             ))}
           </div>
@@ -302,8 +304,13 @@ export function MinimizableShell({ children, currentSection, onSectionChange }: 
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.12 }}
                 >
-                  <span style={{ color: GREEN_ACTIVE, fontSize: 13, fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase" }}>
+                  <span style={{ color: GREEN_ACTIVE, fontSize: 13, fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase", display: "flex", alignItems: "center", gap: 5 }}>
                     {current.label}
+                    {current.beta && (
+                      <span style={{ fontSize: 8, fontWeight: 700, background: "rgba(199,255,107,0.18)", borderRadius: 4, padding: "1px 5px", letterSpacing: "0.06em" }}>
+                        BETA
+                      </span>
+                    )}
                   </span>
                 </motion.div>
               )}

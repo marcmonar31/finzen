@@ -36,6 +36,13 @@ def saldo_cuenta(cuenta_id: str, session: Session) -> Decimal:
 
 
 def saldo_total_workspace(workspace_id: str, session: Session) -> Decimal:
+    from datetime import date
+    from models.workspace import Workspace as WorkspaceModel
+    from services.conversion import convertir
+
+    workspace = session.get(WorkspaceModel, workspace_id)
+    moneda_base = workspace.moneda_base if workspace else "EUR"
+
     cuentas = session.exec(
         select(Cuenta).where(
             Cuenta.workspace_id == workspace_id,
@@ -45,6 +52,9 @@ def saldo_total_workspace(workspace_id: str, session: Session) -> Decimal:
     ).all()
 
     total = Decimal("0")
+    hoy = date.today()
     for cuenta in cuentas:
-        total += saldo_cuenta(cuenta.id, session)
+        saldo = saldo_cuenta(cuenta.id, session)
+        saldo_convertido, _ = convertir(saldo, cuenta.moneda, moneda_base, hoy, session)
+        total += saldo_convertido
     return total

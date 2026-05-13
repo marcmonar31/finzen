@@ -303,6 +303,7 @@ export interface DeudaOut {
   cuenta_id: string | null;
   activa: boolean;
   creado_en: string;
+  saldo_pendiente: string | null;
 }
 
 export interface CuotaOut {

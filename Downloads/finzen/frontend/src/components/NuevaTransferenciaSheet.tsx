@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { X, ArrowRight } from "lucide-react";
 import { useForm, Controller } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import Decimal from "decimal.js";
@@ -28,6 +29,7 @@ interface Props {
 }
 
 export function NuevaTransferenciaSheet({ open, onClose }: Props) {
+  const { t } = useTranslation();
   const { data: cuentas = [] } = useCuentas();
   const crear = useCrearTransferencia();
 
@@ -58,13 +60,12 @@ export function NuevaTransferenciaSheet({ open, onClose }: Props) {
   const saldoInsuficiente = saldoOrigen !== null && importeOrigen !== null
     && importeOrigen.greaterThan(saldoOrigen);
 
-  // Each select only shows accounts that are NOT the other selection
   const opcionesOrigen  = cuentas.filter((c) => c.id !== cuentaDestinoId);
   const opcionesDestino = cuentas.filter((c) => c.id !== cuentaOrigenId);
 
   async function onSubmit(data: FormValues) {
     if (saldoInsuficiente) {
-      showFlash("Saldo insuficiente en la cuenta origen", "error");
+      showFlash(t("transferencias.saldo_insuficiente"), "error");
       return;
     }
     try {
@@ -80,11 +81,11 @@ export function NuevaTransferenciaSheet({ open, onClose }: Props) {
         body.importe_destino = parseFloat(data.importe_destino).toFixed(4);
       }
       await crear.mutateAsync(body);
-      showFlash("Transferencia creada");
+      showFlash(t("transferencias.creada"));
       reset();
       onClose();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Error al guardar";
+      const msg = err instanceof Error ? err.message : t("common.error");
       showFlash(msg, "error");
     }
   }
@@ -92,24 +93,24 @@ export function NuevaTransferenciaSheet({ open, onClose }: Props) {
   return (
     <AnimatePresence>
       {open && (
-        <>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 bg-black/20 backdrop-blur-md z-50 flex items-center justify-center p-4"
+          onClick={onClose}
+        >
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/40 z-40"
-            onClick={onClose}
-          />
-          <motion.div
-            initial={{ y: "100%" }}
-            animate={{ y: 0 }}
-            exit={{ y: "100%" }}
-            transition={{ type: "spring", damping: 30, stiffness: 300 }}
-            className="fixed bottom-4 left-4 right-4 z-50 bg-surface rounded-3xl max-h-[85vh] overflow-y-auto shadow-[var(--shadow-floating)]"
+            initial={{ opacity: 0, scale: 0.96, y: 8 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.96, y: 8 }}
+            transition={{ type: "spring", damping: 28, stiffness: 380 }}
+            className="w-full max-w-md bg-surface rounded-3xl max-h-[90vh] overflow-y-auto shadow-[var(--shadow-floating)]"
+            onClick={(e) => e.stopPropagation()}
           >
             <form onSubmit={handleSubmit(onSubmit)} className="p-5 space-y-4">
               <div className="flex items-center justify-between">
-                <h2 className="font-bold text-lg text-fg">Nueva transferencia</h2>
+                <h2 className="font-bold text-lg text-fg">{t("transferencias.nueva")}</h2>
                 <button type="button" onClick={onClose} className="w-8 h-8 rounded-full bg-surface-2 flex items-center justify-center">
                   <X className="w-4 h-4 text-fg" />
                 </button>
@@ -118,21 +119,21 @@ export function NuevaTransferenciaSheet({ open, onClose }: Props) {
               {/* Cuentas */}
               <div className="flex items-center gap-2">
                 <div className="flex-1">
-                  <p className="text-xs text-fg-muted mb-1 font-medium">Origen</p>
+                  <p className="text-xs text-fg-muted mb-1 font-medium">{t("transferencias.origen")}</p>
                   <select
                     {...register("cuenta_origen_id")}
                     className="w-full bg-surface-2 rounded-xl px-3 py-2.5 text-sm text-fg appearance-none focus:outline-none"
                   >
-                    <option value="">Cuenta origen</option>
+                    <option value="">{t("transferencias.cuenta_origen")}</option>
                     {opcionesOrigen.map((c) => (
                       <option key={c.id} value={c.id}>
-                        {c.emoji ?? "🏦"} {c.nombre}
+                        {c.nombre} ({c.moneda})
                       </option>
                     ))}
                   </select>
                   {saldoOrigen !== null && (
                     <p className={`text-xs mt-0.5 ${saldoInsuficiente ? "text-[#FF5C5C] font-semibold" : "text-fg-muted"}`}>
-                      Disponible: {formatCurrency(saldoOrigen.abs().toString(), cuentaOrigen!.moneda)}
+                      {t("transferencias.disponible")} {formatCurrency(saldoOrigen.abs().toString(), cuentaOrigen!.moneda)}
                     </p>
                   )}
                   {errors.cuenta_origen_id && <p className="text-xs text-red-500 mt-0.5">{errors.cuenta_origen_id.message}</p>}
@@ -141,15 +142,15 @@ export function NuevaTransferenciaSheet({ open, onClose }: Props) {
                 <ArrowRight className="w-4 h-4 text-fg-muted flex-shrink-0 mt-4" />
 
                 <div className="flex-1">
-                  <p className="text-xs text-fg-muted mb-1 font-medium">Destino</p>
+                  <p className="text-xs text-fg-muted mb-1 font-medium">{t("transferencias.destino")}</p>
                   <select
                     {...register("cuenta_destino_id")}
                     className="w-full bg-surface-2 rounded-xl px-3 py-2.5 text-sm text-fg appearance-none focus:outline-none"
                   >
-                    <option value="">Cuenta destino</option>
+                    <option value="">{t("transferencias.cuenta_destino")}</option>
                     {opcionesDestino.map((c) => (
                       <option key={c.id} value={c.id}>
-                        {c.emoji ?? "🏦"} {c.nombre}
+                        {c.nombre} ({c.moneda})
                       </option>
                     ))}
                   </select>
@@ -160,7 +161,7 @@ export function NuevaTransferenciaSheet({ open, onClose }: Props) {
               {/* Importe origen */}
               <div>
                 <p className="text-xs text-fg-muted mb-1 font-medium">
-                  Importe {cuentaOrigen ? `(${cuentaOrigen.moneda})` : ""}
+                  {t("common.importe")} {cuentaOrigen ? `(${cuentaOrigen.moneda})` : ""}
                 </p>
                 <Controller
                   name="importe_origen"
@@ -182,7 +183,7 @@ export function NuevaTransferenciaSheet({ open, onClose }: Props) {
               {distintaMoneda && (
                 <div>
                   <p className="text-xs text-fg-muted mb-1 font-medium">
-                    Importe recibido ({cuentaDestino?.moneda}) — opcional, si lo conoces
+                    {t("transferencias.importe_recibido")} ({cuentaDestino?.moneda}) — {t("transferencias.opcional_si")}
                   </p>
                   <Controller
                     name="importe_destino"
@@ -192,13 +193,13 @@ export function NuevaTransferenciaSheet({ open, onClose }: Props) {
                         value={field.value ?? ""}
                         onChange={field.onChange}
                         onBlur={field.onBlur}
-                        placeholder="Se calculará automáticamente"
+                        placeholder={t("transferencias.auto_calcular")}
                         className="w-full bg-surface-2 rounded-xl px-4 py-3 text-sm text-fg focus:outline-none focus:ring-2 focus:ring-ink/20"
                       />
                     )}
                   />
                   <p className="text-xs text-fg-muted mt-1">
-                    Si lo dejas vacío, se convertirá con la tasa del día ({cuentaOrigen?.moneda} → {cuentaDestino?.moneda})
+                    {t("transferencias.se_convertira")} ({cuentaOrigen?.moneda} → {cuentaDestino?.moneda})
                   </p>
                 </div>
               )}
@@ -207,7 +208,7 @@ export function NuevaTransferenciaSheet({ open, onClose }: Props) {
               <div>
                 <input
                   {...register("concepto")}
-                  placeholder="Concepto"
+                  placeholder={t("common.concepto")}
                   className="w-full bg-surface-2 rounded-xl px-4 py-3 text-sm text-fg placeholder:text-fg-subtle focus:outline-none focus:ring-2 focus:ring-ink/20"
                 />
               </div>
@@ -229,14 +230,14 @@ export function NuevaTransferenciaSheet({ open, onClose }: Props) {
                 }`}
               >
                 {crear.isPending
-                  ? "Guardando…"
+                  ? t("common.guardando")
                   : saldoInsuficiente
-                  ? "Saldo insuficiente"
-                  : "Guardar transferencia"}
+                  ? t("common.saldo_insuficiente")
+                  : t("transferencias.guardar")}
               </button>
             </form>
           </motion.div>
-        </>
+        </motion.div>
       )}
     </AnimatePresence>
   );

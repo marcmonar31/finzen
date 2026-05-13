@@ -236,3 +236,52 @@ html.dark {
 .active\:bg-surface-2:active   { background-color: var(--fz-surface-2) }
 .active\:bg-surface-3:active   { background-color: var(--fz-surface-3) }
 .focus\:ring-ink\/20:focus     { --tw-ring-color: rgba(10,10,10,0.20); }
+
+/* ── Metallic text (BalanceCard amount) ───────────────────────────────────── */
+.text-metallic {
+  background: linear-gradient(
+    110deg,
+    #8a8a8a  0%,
+    #d4d4d4 18%,
+    #ffffff 30%,
+    #f0f0f0 40%,
+    #b8b8b8 55%,
+    #e4e4e4 70%,
+    #a0a0a0 85%,
+    #d8d8d8 100%
+  );
+  background-size: 250% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.55));
+  animation: metal-shimmer 3.5s ease-in-out infinite;
+}
+@keyframes metal-shimmer {
+  0%   { background-position: 160% center; }
+  100% { background-position: -60% center; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .text-metallic { animation: none; }
+}
+
+/* ── BalanceCard blob animations ──────────────────────────────────────────── */
+@keyframes blob1 {
+  0%, 100% { transform: translate(0,    0)    scale(1);    }
+  33%       { transform: translate(28px, -18px) scale(1.07); }
+  66%       { transform: translate(-14px, 14px) scale(0.96); }
+}
+@keyframes blob2 {
+  0%, 100% { transform: translate(0,     0)    scale(1);    }
+  40%       { transform: translate(-22px, 12px) scale(1.1);  }
+  70%       { transform: translate(18px, -12px) scale(0.93); }
+}
+@keyframes blob3 {
+  0%, 100% { transform: translate(0,     0)    scale(1);    }
+  50%       { transform: translate(-16px, 18px) scale(1.06); }
+}
+@media (prefers-reduced-motion: reduce) {
+  @keyframes blob1 { from, to { transform: none; } }
+  @keyframes blob2 { from, to { transform: none; } }
+  @keyframes blob3 { from, to { transform: none; } }
+}

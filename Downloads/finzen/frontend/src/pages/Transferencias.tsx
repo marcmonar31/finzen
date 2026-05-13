@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Plus } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { Plus, ArrowLeftRight } from "lucide-react";
 import { useTransferencias, useArchivarTransferencia } from "@/hooks/useTransferencias";
 import { TransferenciaItem } from "@/components/TransferenciaItem";
 import { NuevaTransferenciaSheet } from "@/components/NuevaTransferenciaSheet";
@@ -10,7 +11,7 @@ import type { Transferencia } from "@/types/api";
 function agruparPorFecha(transfers: Transferencia[]): Map<string, Transferencia[]> {
   const mapa = new Map<string, Transferencia[]>();
   for (const t of transfers) {
-    const fecha = t.creado_en.slice(0, 10);
+    const fecha = t.movimiento_origen?.fecha ?? t.creado_en.slice(0, 10);
     const grupo = mapa.get(fecha) ?? [];
     grupo.push(t);
     mapa.set(fecha, grupo);
@@ -19,6 +20,7 @@ function agruparPorFecha(transfers: Transferencia[]): Map<string, Transferencia[
 }
 
 export function Transferencias() {
+  const { t } = useTranslation();
   const [showNueva, setShowNueva] = useState(false);
   const { data: transferencias = [], isLoading } = useTransferencias();
   const archivar = useArchivarTransferencia();
@@ -28,9 +30,9 @@ export function Transferencias() {
   async function handleArchivar(id: string) {
     try {
       await archivar.mutateAsync(id);
-      showFlash("Transferencia eliminada", "delete");
+      showFlash(t("transferencias.eliminada"), "delete");
     } catch {
-      showFlash("Error al eliminar", "error");
+      showFlash(t("common.error"), "error");
     }
   }
 
@@ -39,7 +41,7 @@ export function Transferencias() {
       {/* Header — píldora flotante */}
       <div className="pt-10 px-4 pb-4">
         <div className="bg-ink rounded-3xl px-5 py-4 flex items-center justify-between shadow-[var(--shadow-floating)]">
-          <h1 className="text-white font-bold text-2xl">Transferencias</h1>
+          <h1 className="text-white font-bold text-2xl">{t("transferencias.titulo")}</h1>
           <button
             onClick={() => setShowNueva(true)}
             className="w-9 h-9 rounded-full bg-[#C7FF6B] flex items-center justify-center active:scale-95 transition-transform"
@@ -67,16 +69,16 @@ export function Transferencias() {
 
         {!isLoading && transferencias.length === 0 && (
           <div className="flex flex-col items-center justify-center py-16 text-center">
-            <div className="w-16 h-16 rounded-2xl bg-surface shadow-[var(--shadow-card)] flex items-center justify-center text-3xl mb-4">
-              🔄
+            <div className="w-16 h-16 rounded-2xl bg-surface shadow-[var(--shadow-card)] flex items-center justify-center mb-4">
+              <ArrowLeftRight className="w-8 h-8 text-fg-muted" />
             </div>
-            <p className="font-bold text-fg mb-1">Sin transferencias</p>
-            <p className="text-fg-muted text-sm mb-5">Mueve dinero entre tus cuentas</p>
+            <p className="font-bold text-fg mb-1">{t("transferencias.sin_transferencias")}</p>
+            <p className="text-fg-muted text-sm mb-5">{t("transferencias.mueve_dinero")}</p>
             <button
               onClick={() => setShowNueva(true)}
               className="bg-ink text-white rounded-full px-6 py-2.5 text-sm font-semibold"
             >
-              Nueva transferencia
+              {t("transferencias.nueva")}
             </button>
           </div>
         )}

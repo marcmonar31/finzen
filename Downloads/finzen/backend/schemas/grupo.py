@@ -43,6 +43,11 @@ class GrupoOut(BaseModel):
     miembros: List[GrupoMiembroOut] = []
 
 
+class GrupoUpdate(BaseModel):
+    nombre: Optional[str] = None
+    emoji: Optional[str] = None
+
+
 class GastoRepartoInput(BaseModel):
     miembro_id: str
     # Para modo manual: importe exacto

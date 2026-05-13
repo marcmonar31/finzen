@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, ChevronDown } from "lucide-react";
 import { useForm, Controller } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useCuentas } from "@/hooks/useCuentas";
@@ -31,6 +32,7 @@ interface Props {
 }
 
 export function EditarMovimientoSheet({ movimiento, onClose }: Props) {
+  const { t } = useTranslation();
   const open = !!movimiento;
   const esTransferencia = movimiento
     ? movimiento.tipo === "transferencia_origen" || movimiento.tipo === "transferencia_destino"
@@ -51,14 +53,13 @@ export function EditarMovimientoSheet({ movimiento, onClose }: Props) {
   const cuentaId = watch("cuenta_id");
   const cuentaSeleccionada = cuentas.find((c) => c.id === cuentaId);
 
-  // Pre-fill form when movement changes
   useEffect(() => {
     if (!movimiento || esTransferencia) return;
-    const t = movimiento.tipo === "ingreso" ? "ingreso" : "gasto";
-    setTipo(t);
+    const tipoVal = movimiento.tipo === "ingreso" ? "ingreso" : "gasto";
+    setTipo(tipoVal);
     setMoneda(movimiento.moneda);
     reset({
-      tipo: t,
+      tipo: tipoVal,
       importe: parseFloat(movimiento.importe).toString(),
       concepto: movimiento.concepto,
       cuenta_id: movimiento.cuenta_id,
@@ -68,9 +69,9 @@ export function EditarMovimientoSheet({ movimiento, onClose }: Props) {
     });
   }, [movimiento?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  function handleTipo(t: "ingreso" | "gasto") {
-    setTipo(t);
-    setValue("tipo", t);
+  function handleTipo(tp: "ingreso" | "gasto") {
+    setTipo(tp);
+    setValue("tipo", tp);
     setValue("categoria_id", "");
   }
 
@@ -93,42 +94,44 @@ export function EditarMovimientoSheet({ movimiento, onClose }: Props) {
           categoria_id: data.categoria_id || null,
         },
       });
-      showFlash("Movimiento actualizado");
+      showFlash(t("movimientos.movimiento_actualizado"));
       onClose();
     } catch (err: unknown) {
-      showFlash(err instanceof Error ? err.message : "Error al actualizar", "error");
+      showFlash(err instanceof Error ? err.message : t("common.error"), "error");
     }
   }
 
   return (
     <AnimatePresence>
       {open && (
-        <>
+        <motion.div
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+          className="fixed inset-0 bg-black/20 backdrop-blur-md z-50 flex items-center justify-center p-4"
+          onClick={onClose}
+        >
           <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/40 z-40"
-            onClick={onClose}
-          />
-          <motion.div
-            initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
-            transition={{ type: "spring", damping: 30, stiffness: 300 }}
-            className="fixed bottom-4 left-4 right-4 z-50 bg-surface rounded-3xl max-h-[85vh] overflow-y-auto shadow-[var(--shadow-floating)]"
+            initial={{ opacity: 0, scale: 0.96, y: 8 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.96, y: 8 }}
+            transition={{ type: "spring", damping: 28, stiffness: 380 }}
+            className="w-full max-w-md bg-surface rounded-3xl max-h-[90vh] overflow-y-auto shadow-[var(--shadow-floating)]"
+            onClick={(e) => e.stopPropagation()}
           >
             {esTransferencia ? (
               <div className="p-8 flex flex-col items-center text-center">
                 <div className="w-10 h-1 bg-border-ui rounded-full mx-auto mb-6" />
-                <p className="font-bold text-fg text-base mb-2">No editable</p>
+                <p className="font-bold text-fg text-base mb-2">{t("movimientos.no_editable")}</p>
                 <p className="text-fg-muted text-sm">
-                  Las transferencias no se pueden editar directamente. Elimínala y créala de nuevo.
+                  {t("movimientos.no_editable_desc")}
                 </p>
                 <button onClick={onClose} className="mt-6 w-full bg-ink text-white rounded-2xl py-3.5 font-semibold text-sm">
-                  Entendido
+                  {t("common.entendido")}
                 </button>
               </div>
             ) : (
               <form onSubmit={handleSubmit(onSubmit)} className="p-5 space-y-4">
                 <div className="flex items-center justify-between">
-                  <h2 className="font-bold text-lg text-fg">Editar movimiento</h2>
+                  <h2 className="font-bold text-lg text-fg">{t("movimientos.editar")}</h2>
                   <button type="button" onClick={onClose} className="w-8 h-8 rounded-full bg-surface-2 flex items-center justify-center">
                     <X className="w-4 h-4 text-fg" />
                   </button>
@@ -136,15 +139,15 @@ export function EditarMovimientoSheet({ movimiento, onClose }: Props) {
 
                 {/* Toggle ingreso/gasto */}
                 <div className="flex bg-surface-2 rounded-2xl p-1 gap-1">
-                  {(["gasto", "ingreso"] as const).map((t) => (
+                  {(["gasto", "ingreso"] as const).map((tp) => (
                     <button
-                      key={t} type="button" onClick={() => handleTipo(t)}
+                      key={tp} type="button" onClick={() => handleTipo(tp)}
                       className={clsx(
                         "flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all",
-                        tipo === t ? "bg-ink text-white shadow" : "text-fg-muted"
+                        tipo === tp ? "bg-ink text-white shadow" : "text-fg-muted"
                       )}
                     >
-                      {t === "gasto" ? "💸 Gasto" : "💰 Ingreso"}
+                      {tp === "gasto" ? t("movimientos.gasto") : t("movimientos.ingreso")}
                     </button>
                   ))}
                 </div>
@@ -170,7 +173,7 @@ export function EditarMovimientoSheet({ movimiento, onClose }: Props) {
                   {errors.importe && <p className="text-xs text-red-500 mt-1">{errors.importe.message}</p>}
                   {cuentaSeleccionada && cuentaSeleccionada.moneda !== moneda && (
                     <p className="text-xs text-fg-muted mt-1">
-                      Se convertirá a {cuentaSeleccionada.moneda} con la tasa del día
+                      {t("movimientos.convertir_tasa", { moneda: cuentaSeleccionada.moneda })}
                     </p>
                   )}
                 </div>
@@ -178,7 +181,7 @@ export function EditarMovimientoSheet({ movimiento, onClose }: Props) {
                 {/* Concepto */}
                 <div>
                   <input
-                    {...register("concepto")} placeholder="Concepto"
+                    {...register("concepto")} placeholder={t("common.concepto")}
                     className="w-full bg-surface-2 rounded-xl px-4 py-3 text-sm text-fg placeholder:text-fg-subtle focus:outline-none focus:ring-2 focus:ring-ink/20"
                   />
                   {errors.concepto && <p className="text-xs text-red-500 mt-1">{errors.concepto.message}</p>}
@@ -190,9 +193,9 @@ export function EditarMovimientoSheet({ movimiento, onClose }: Props) {
                     {...register("cuenta_id")} onChange={handleCuenta}
                     className="w-full bg-surface-2 rounded-xl px-4 py-3 text-sm text-fg appearance-none focus:outline-none focus:ring-2 focus:ring-ink/20"
                   >
-                    <option value="">Elige una cuenta</option>
+                    <option value="">{t("movimientos.elige_cuenta")}</option>
                     {cuentas.map((c) => (
-                      <option key={c.id} value={c.id}>{c.emoji ?? "🏦"} {c.nombre} ({c.moneda})</option>
+                      <option key={c.id} value={c.id}>{c.nombre} ({c.moneda})</option>
                     ))}
                   </select>
                   <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-fg-subtle pointer-events-none" />
@@ -206,7 +209,7 @@ export function EditarMovimientoSheet({ movimiento, onClose }: Props) {
                       onChange={(e) => setValue("categoria_id", e.target.value)}
                       className="w-full bg-surface-2 rounded-xl px-4 py-3 text-sm text-fg appearance-none focus:outline-none focus:ring-2 focus:ring-ink/20"
                     >
-                      <option value="">Sin categoría</option>
+                      <option value="">{t("common.sin_categoria")}</option>
                       {categorias.map((cat) => (
                         <option key={cat.id} value={cat.id}>
                           {cat.emoji ?? "📦"} {cat.nombre}
@@ -225,16 +228,24 @@ export function EditarMovimientoSheet({ movimiento, onClose }: Props) {
                   />
                 </div>
 
+                {/* Notas */}
+                <textarea
+                  {...register("notas")}
+                  placeholder={t("common.notas_placeholder")}
+                  rows={2}
+                  className="w-full bg-surface-2 rounded-xl px-4 py-3 text-sm text-fg placeholder:text-fg-subtle focus:outline-none focus:ring-2 focus:ring-ink/20 resize-none"
+                />
+
                 <button
                   type="submit" disabled={actualizar.isPending}
                   className="w-full bg-ink text-white rounded-2xl py-4 font-semibold text-base active:scale-95 transition-transform disabled:opacity-60"
                 >
-                  {actualizar.isPending ? "Guardando…" : "Guardar cambios"}
+                  {actualizar.isPending ? t("common.guardando") : t("common.guardar_cambios")}
                 </button>
               </form>
             )}
           </motion.div>
-        </>
+        </motion.div>
       )}
     </AnimatePresence>
   );
